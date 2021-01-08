@@ -19,6 +19,32 @@ typedef short bool;
 
 #define SHKEY 300
 #define SEM1KEY 'B'
+#define MSG_SCHED_KEY 'H'
+
+struct processInfo
+{
+    int id;
+    int arrivalTime;
+    int runTime;
+    int priority;
+};
+
+struct msgbuff
+{
+    long mtype;
+    int numberOfProcesses;
+    struct processInfo p_info;
+};
+
+/* arg for semctl system calls. */
+union Semun
+{
+    int val;               /* value for SETVAL */
+    struct semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
+    ushort *array;         /* array for GETALL & SETALL */
+    struct seminfo *__buf; /* buffer for IPC_INFO */
+    void *__pad;
+};
 
 ///==============================
 //don't mess with this variable//

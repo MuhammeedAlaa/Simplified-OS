@@ -4,27 +4,9 @@ void clearResources(int);
 
 #define MAXCHAR 1000
 
-struct processInfo
-{
-    int id;
-    int arrivalTime;
-    int runTime;
-    int priority;
-};
-
-/* arg for semctl system calls. */
-union Semun
-{
-    int val;               /* value for SETVAL */
-    struct semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
-    ushort *array;         /* array for GETALL & SETALL */
-    struct seminfo *__buf; /* buffer for IPC_INFO */
-    void *__pad;
-};
-
 void down(int sem);
 union Semun semun;
-int sem1;
+int sem1, sched_msgq_id;
 int main(int argc, char *argv[])
 {
     signal(SIGINT, clearResources);
@@ -33,7 +15,7 @@ int main(int argc, char *argv[])
     int numberOfProcess = -1;
     FILE *inputFile;
     char str[MAXCHAR];
-    char *fileName = "/mnt/c/Users/Dell/Desktop/Simplified-OS/Phase1/code/processes.txt";
+    char *fileName = "processes.txt";
     inputFile = fopen(fileName, "r");
 
     if (inputFile == NULL)
@@ -90,14 +72,14 @@ int main(int argc, char *argv[])
         perror("error in fork");
     else if (pid1 == 0)
     {
-        execl("/mnt/c/Users/Dell/Desktop/Simplified-OS/Phase1/code/clock", "clock", NULL);
+        execl("clk.out", "clk", NULL);
     }
     int pid2 = fork();
     if (pid2 == -1)
         perror("error in fork");
     else if (pid2 == 0)
     {
-        execl("/mnt/c/Users/Dell/Desktop/Simplified-OS/Phase1/code/scheduler", "scheduler", NULL);
+        execl("scheduler.out", "scheduler", NULL);
     }
     // 4. Use this function after creating the clock process to initialize clock
     initClk();
@@ -110,11 +92,52 @@ int main(int argc, char *argv[])
 
     key_t key_id = ftok("keyfile", SEM1KEY);
     sem1 = semget(key_id, 1, 0666 | IPC_CREAT);
+    // create message queue to communicate with scheduler
+    key_id = ftok("keyfile", MSG_SCHED_KEY);
+    sched_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
+
+    int curr_process_index = 0, curr_number_of_processes;
+    // TODO: check dynamic memory allocation
+    struct processInfo curr_process;
+    struct msgbuff msg;
     while (1)
     {
         down(sem1);
         int currentTime = getClk();
-        printf("%d \n", currentTime);
+        // printf("%d \n", currentTime);
+        curr_number_of_processes = 0;
+        // count number of processes to be sent to the schedular
+        while (info[curr_process_index].arrivalTime == currentTime)
+        {
+            curr_process_index++;
+            curr_number_of_processes++;
+        }
+
+        if (curr_number_of_processes != 0)
+        {
+            curr_process_index = curr_process_index - curr_number_of_processes;
+            // fill the array with the processes of the current time
+            while (curr_number_of_processes > 0)
+            {
+                curr_process.id = info[curr_process_index].id;
+                curr_process.arrivalTime = info[curr_process_index].arrivalTime;
+                curr_process.runTime = info[curr_process_index].runTime;
+                curr_process.priority = info[curr_process_index].priority;
+                curr_process_index++;
+
+                // prepare & send message to scheduler
+                msg.mtype = getpid() % 10000;
+                msg.numberOfProcesses = curr_number_of_processes;
+                msg.p_info = curr_process;
+                // TODO : sizeof(msg.info)
+                int send_val = msgsnd(sched_msgq_id, &msg, sizeof(msg.numberOfProcesses) + sizeof(msg.p_info), !IPC_NOWAIT);
+                if (send_val == -1)
+                {
+                    perror("Error in sending from proc_gen\n");
+                }
+                curr_number_of_processes--;
+            }
+        }
     }
 
     // 7. Clear clock resources
@@ -138,5 +161,6 @@ void clearResources(int signum)
 {
     destroyClk(true);
     semctl(sem1, 0, IPC_RMID, semun);
+    msgctl(sched_msgq_id, IPC_RMID, (struct msqid_ds *)0);
     exit(0);
 }

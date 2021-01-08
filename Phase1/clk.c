@@ -18,16 +18,6 @@ void cleanup(int signum)
     exit(0);
 }
 
-/* arg for semctl system calls. */
-union Semun
-{
-    int val;               /* value for SETVAL */
-    struct semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
-    ushort *array;         /* array for GETALL & SETALL */
-    struct seminfo *__buf; /* buffer for IPC_INFO */
-    void *__pad;
-};
-
 /* This file represents the system clock for ease of calculations */
 int main(int argc, char *argv[])
 {
