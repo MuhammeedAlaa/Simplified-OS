@@ -16,25 +16,26 @@ int main(int argc, char *argv[])
     signal(SIGINT, clearResources);
 
     // 1. Read the input file once to count the number of processes
-    int number_of_processes = -1;
+    // int number_of_processes = -1;
     FILE *input_file;
     char str[MAXCHAR];
-    char *file_path = "processes.txt";
-    input_file = fopen(file_path, "r");
+    char *file_path = "processes_1.txt";
+    // input_file = fopen(file_path, "r");
 
-    if (input_file == NULL)
-    {
-        printf("Could not open file %s", file_path);
-        return 1;
-    }
-    while (fgets(str, MAXCHAR, input_file) != NULL)
-        number_of_processes++;
-    fclose(input_file);
+    // if (input_file == NULL)
+    // {
+    //     printf("Could not open file %s", file_path);
+    //     return 1;
+    // }
+    // while (fgets(str, MAXCHAR, input_file) != NULL)
+    //     number_of_processes++;
+    // fclose(input_file);
     /* 
     2. allocate an array of structs with the size of the number of processes, then read the processes
     info from the file and store them in the array one by one 
     */
-    processes_info = malloc(sizeof(struct processInfo) * number_of_processes);
+    int number_of_processes = 0, memory_size = 10;
+    processes_info = (struct processInfo *)malloc(sizeof(struct processInfo) * memory_size);
 
     input_file = fopen(file_path, "r");
     int process_index = 0;
@@ -58,7 +59,28 @@ int main(int argc, char *argv[])
         }
         processes_info[process_index] = process;
         process_index++;
+        number_of_processes++;
+
+        // if we need more memory then reallocate with twice the memory
+        if (process_index == memory_size - 1)
+        {
+            memory_size = memory_size * 2;
+            struct processInfo *new = realloc(processes_info, sizeof(struct processInfo) * memory_size);
+            if (new == NULL)
+            {
+                perror("Error while reallocating memory");
+            }
+            processes_info = new;
+        }
     }
+    // reallocate memory to fit the number of processes
+    struct processInfo *new = realloc(processes_info, sizeof(struct processInfo) * number_of_processes);
+    if (new == NULL)
+    {
+        perror("Error while reallocating memory");
+    }
+    processes_info = new;
+
     fclose(input_file);
 
     // 3. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.

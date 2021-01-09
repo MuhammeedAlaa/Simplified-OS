@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #define null 0
 
 struct processData
@@ -11,10 +12,15 @@ struct processData
     int id;
 };
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
-    FILE * pFile;
-    pFile = fopen("processes.txt", "w");
+    char *testnum = argv[1];
+    FILE *pFile;
+    strcat(testnum, ".txt");
+    char *name;
+    strcpy(name, "testcases/processes_");
+    strcat(name, testnum);
+    pFile = fopen(name, "w");
     int no;
     struct processData pData;
     printf("Please enter the number of processes you want to generate: ");
@@ -23,7 +29,7 @@ int main(int argc, char * argv[])
     //fprintf(pFile,"%d\n",no);
     fprintf(pFile, "#id arrival runtime priority\n");
     pData.arrivaltime = 1;
-    for (int i = 1 ; i <= no ; i++)
+    for (int i = 1; i <= no; i++)
     {
         //generate Data Randomly
         //[min-max] = rand() % (max_number + 1 - minimum_number) + minimum_number
