@@ -15,25 +15,13 @@ int main(int argc, char *argv[])
 {
     signal(SIGINT, clearResources);
 
-    // 1. Read the input file once to count the number of processes
-    // int number_of_processes = -1;
+    /*
+    1. allocate an array of structs, then read the processes info from the file and store them in the array one by one 
+    */
     FILE *input_file;
     char str[MAXCHAR];
-    char *file_path = "processes_1.txt";
-    // input_file = fopen(file_path, "r");
+    char *file_path = "testcases/processes_1.txt";
 
-    // if (input_file == NULL)
-    // {
-    //     printf("Could not open file %s", file_path);
-    //     return 1;
-    // }
-    // while (fgets(str, MAXCHAR, input_file) != NULL)
-    //     number_of_processes++;
-    // fclose(input_file);
-    /* 
-    2. allocate an array of structs with the size of the number of processes, then read the processes
-    info from the file and store them in the array one by one 
-    */
     int number_of_processes = 0, memory_size = 10;
     processes_info = (struct processInfo *)malloc(sizeof(struct processInfo) * memory_size);
 
@@ -80,10 +68,10 @@ int main(int argc, char *argv[])
         perror("Error while reallocating memory");
     }
     processes_info = new;
-
+    printf("%d processes read from file \n", number_of_processes);
     fclose(input_file);
 
-    // 3. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
+    // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
     int quantum = -1;
     int algorithm_number = -1;
     printf("Please enter : \n[0] for HPF\n[1] for SRTN\n[2] for RR\n");
@@ -94,7 +82,7 @@ int main(int argc, char *argv[])
         scanf("%d", &quantum);
     }
 
-    // 4. Initiate and create the scheduler and clock processes.
+    // 3. Initiate and create the scheduler and clock processes.
     // -- forking the clock process
     int clock_pid = fork();
     if (clock_pid == -1)
@@ -112,10 +100,10 @@ int main(int argc, char *argv[])
         execl("scheduler.out", "scheduler", NULL);
     }
 
-    // 5. initialize clock so that the clock process starts to count seconds
+    // 4. initialize clock so that the clock process starts to count seconds
     initClk();
 
-    // 6. Send the information to the scheduler at the appropriate time.
+    // 5. Send the information to the scheduler at the appropriate time.
     /* 
         Initialize the IPC Resources needed:
          - A semaphore to synchronize with the clock time
@@ -168,7 +156,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    // 7. Clear clock resources
+    // 6. Clear clock resources
     destroyClk(true);
 }
 
