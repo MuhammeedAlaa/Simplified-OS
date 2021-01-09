@@ -81,15 +81,9 @@ int main(int argc, char *argv[])
     {
         execl("scheduler.out", "scheduler", NULL);
     }
-    // 4. Use this function after creating the clock process to initialize clock
-    initClk();
-    // To get time use this
-    int x = getClk();
-    printf("current time is %d\n", x);
-    // TODO Generation Main Loop
-    // 5. Create a data structure for processes and provide it with its parameters.
-    // 6. Send the information to the scheduler at the appropriate time.
 
+    // handshaking 
+    
     key_t key_id = ftok("keyfile", SEM1KEY);
     sem1 = semget(key_id, 1, 0666 | IPC_CREAT);
     // create message queue to communicate with scheduler
@@ -98,8 +92,29 @@ int main(int argc, char *argv[])
 
     int curr_process_index = 0, curr_number_of_processes;
     // TODO: check dynamic memory allocation
+    
+    struct msgAlgorithm initMsg;
+    // prepare & send message to scheduler
+    initMsg.mtype = getpid() % 10000;
+    initMsg.algorithm = algorithm;
+    initMsg.opts = q;
+    int send_val = msgsnd(sched_msgq_id, &initMsg, sizeof(initMsg.algorithm) + sizeof(initMsg.opts), !IPC_NOWAIT);
+    if (send_val == -1)
+    {
+        perror("Error in sending from proc_gen\n");
+    }
+
     struct processInfo curr_process;
     struct msgbuff msg;
+
+    // 4. Use this function after creating the clock process to initialize clock
+    initClk();
+    // To get time use this
+    int x = getClk();
+    printf("current time is %d\n", x);
+    // TODO Generation Main Loop
+    // 5. Create a data structure for processes and provide it with its parameters.
+    // 6. Send the information to the scheduler at the appropriate time.
     while (1)
     {
         down(sem1);
@@ -113,7 +128,18 @@ int main(int argc, char *argv[])
             curr_number_of_processes++;
         }
 
-        if (curr_number_of_processes != 0)
+        if(curr_number_of_processes == 0)
+        {
+            // prepare & send message to scheduler
+            msg.mtype = getpid() % 10000;
+            msg.numberOfProcesses = curr_number_of_processes;
+            int send_val = msgsnd(sched_msgq_id, &msg, sizeof(msg.numberOfProcesses) + sizeof(msg.p_info), !IPC_NOWAIT);
+            if (send_val == -1)
+            {
+                perror("Error in sending from proc_gen\n");
+            }
+        }
+        else
         {
             curr_process_index = curr_process_index - curr_number_of_processes;
             // fill the array with the processes of the current time
