@@ -81,7 +81,6 @@ node* pop(minHeap *hp) {
         hp->elem[0] = hp->elem[--(hp->size)] ;
         hp->elem = realloc(hp->elem, hp->size * sizeof(node)) ;
         heapify(hp, 0) ;
-        printf("temp is: %d\n", temp->data);
         return temp;
     } else {
         free(hp->elem) ;

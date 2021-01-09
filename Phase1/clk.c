@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     processSem = semget(key_id, 1, 0666 | IPC_CREAT);
     while (1)
     {
-        usleep(500000);
+        sleep(1);
         (*shmaddr)++;
         up(generatorSem);
         up(processSem);
