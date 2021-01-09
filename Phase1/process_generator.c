@@ -1,41 +1,48 @@
 #include "headers.h"
 
-void clearResources(int);
-
 #define MAXCHAR 1000
 
+// Function declarations
+void clearResources(int);
 void down(int sem);
+
+// Global variables
 union Semun semun;
 int sem1, sched_msgq_id;
+struct processInfo *processes_info = NULL;
+
 int main(int argc, char *argv[])
 {
     signal(SIGINT, clearResources);
 
-    // 1. Read the input files. done
-    int numberOfProcess = -1;
-    FILE *inputFile;
+    // 1. Read the input file once to count the number of processes
+    int number_of_processes = -1;
+    FILE *input_file;
     char str[MAXCHAR];
-    char *fileName = "processes.txt";
-    inputFile = fopen(fileName, "r");
+    char *file_path = "processes.txt";
+    input_file = fopen(file_path, "r");
 
-    if (inputFile == NULL)
+    if (input_file == NULL)
     {
-        printf("Could not open file %s", fileName);
+        printf("Could not open file %s", file_path);
         return 1;
     }
-    while (fgets(str, MAXCHAR, inputFile) != NULL)
-        numberOfProcess++;
-    fclose(inputFile);
-    inputFile = fopen(fileName, "r");
-    struct processInfo info[numberOfProcess];
-    int processCount = 0;
-    while (fgets(str, MAXCHAR, inputFile) != NULL)
+    while (fgets(str, MAXCHAR, input_file) != NULL)
+        number_of_processes++;
+    fclose(input_file);
+    /* 
+    2. allocate an array of structs with the size of the number of processes, then read the processes
+    info from the file and store them in the array one by one 
+    */
+    processes_info = malloc(sizeof(struct processInfo) * number_of_processes);
+
+    input_file = fopen(file_path, "r");
+    int process_index = 0;
+    struct processInfo process;
+    while (fgets(str, MAXCHAR, input_file) != NULL)
     {
         if (str[0] == '#')
             continue;
-        struct processInfo process;
-        char *temp;
-        int count = 0;
         char *token = strtok(str, "\t");
         process.id = atoi(token);
 
@@ -49,65 +56,67 @@ int main(int argc, char *argv[])
             else
                 process.priority = atoi(token);
         }
-        info[processCount] = process;
-        processCount++;
+        processes_info[process_index] = process;
+        process_index++;
     }
+    fclose(input_file);
 
-    // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
-    int q = -1;
-    int algorithm = -1;
-    printf("Please enter 0 for HPF, 1 for SRTN, 2 for RR \n");
-    scanf("%d", &algorithm);
-    if (algorithm == 2)
+    // 3. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
+    int quantum = -1;
+    int algorithm_number = -1;
+    printf("Please enter : \n[0] for HPF\n[1] for SRTN\n[2] for RR\n");
+    scanf("%d", &algorithm_number);
+    if (algorithm_number == 2)
     {
-        printf("Please enter quantum for RR \n");
-        scanf("%d", &q);
+        printf("Please enter the required quantum for RR : \n");
+        scanf("%d", &quantum);
     }
 
-    // TODO Initialization
-
-    // 3. Initiate and create the scheduler and clock processes.
-    int pid1 = fork();
-    if (pid1 == -1)
-        perror("error in fork");
-    else if (pid1 == 0)
+    // 4. Initiate and create the scheduler and clock processes.
+    // -- forking the clock process
+    int clock_pid = fork();
+    if (clock_pid == -1)
+        perror("error in forking process");
+    else if (clock_pid == 0)
     {
         execl("clk.out", "clk", NULL);
     }
-    int pid2 = fork();
-    if (pid2 == -1)
+    // -- forking the scheduler process
+    int sched_pid = fork();
+    if (sched_pid == -1)
         perror("error in fork");
-    else if (pid2 == 0)
+    else if (sched_pid == 0)
     {
         execl("scheduler.out", "scheduler", NULL);
     }
-    // 4. Use this function after creating the clock process to initialize clock
-    initClk();
-    // To get time use this
-    int x = getClk();
-    printf("current time is %d\n", x);
-    // TODO Generation Main Loop
-    // 5. Create a data structure for processes and provide it with its parameters.
-    // 6. Send the information to the scheduler at the appropriate time.
 
+    // 5. initialize clock so that the clock process starts to count seconds
+    initClk();
+
+    // 6. Send the information to the scheduler at the appropriate time.
+    /* 
+        Initialize the IPC Resources needed:
+         - A semaphore to synchronize with the clock time
+         - A message queue to send process data to the schedular through
+    */
     key_t key_id = ftok("keyfile", SEM1KEY);
     sem1 = semget(key_id, 1, 0666 | IPC_CREAT);
-    // create message queue to communicate with scheduler
+
     key_id = ftok("keyfile", MSG_SCHED_KEY);
     sched_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
 
     int curr_process_index = 0, curr_number_of_processes;
-    // TODO: check dynamic memory allocation
     struct processInfo curr_process;
     struct msgbuff msg;
+
     while (1)
     {
+        // wait till the clock changes
         down(sem1);
         int currentTime = getClk();
-        // printf("%d \n", currentTime);
         curr_number_of_processes = 0;
-        // count number of processes to be sent to the schedular
-        while (info[curr_process_index].arrivalTime == currentTime)
+        // count number of processes to be sent to the schedular at this moment of time
+        while (processes_info[curr_process_index].arrivalTime == currentTime)
         {
             curr_process_index++;
             curr_number_of_processes++;
@@ -116,25 +125,22 @@ int main(int argc, char *argv[])
         if (curr_number_of_processes != 0)
         {
             curr_process_index = curr_process_index - curr_number_of_processes;
-            // fill the array with the processes of the current time
+            // Send the proesses to the schedular one by one
             while (curr_number_of_processes > 0)
             {
-                curr_process.id = info[curr_process_index].id;
-                curr_process.arrivalTime = info[curr_process_index].arrivalTime;
-                curr_process.runTime = info[curr_process_index].runTime;
-                curr_process.priority = info[curr_process_index].priority;
+                curr_process.id = processes_info[curr_process_index].id;
+                curr_process.arrivalTime = processes_info[curr_process_index].arrivalTime;
+                curr_process.runTime = processes_info[curr_process_index].runTime;
+                curr_process.priority = processes_info[curr_process_index].priority;
                 curr_process_index++;
 
                 // prepare & send message to scheduler
                 msg.mtype = getpid() % 10000;
                 msg.numberOfProcesses = curr_number_of_processes;
                 msg.p_info = curr_process;
-                // TODO : sizeof(msg.info)
+
                 int send_val = msgsnd(sched_msgq_id, &msg, sizeof(msg.numberOfProcesses) + sizeof(msg.p_info), !IPC_NOWAIT);
-                if (send_val == -1)
-                {
-                    perror("Error in sending from proc_gen\n");
-                }
+                validate(MSG_SEND, send_val);
                 curr_number_of_processes--;
             }
         }
@@ -151,10 +157,8 @@ void down(int sem)
     p_op.sem_num = 0;
     p_op.sem_op = -1;
     p_op.sem_flg = !IPC_NOWAIT;
-    if (semop(sem, &p_op, 1) == -1)
-    {
-        perror("error in down");
-    }
+
+    validate(SEM_DOWN, semop(sem, &p_op, 1));
 }
 
 void clearResources(int signum)
@@ -162,5 +166,7 @@ void clearResources(int signum)
     destroyClk(true);
     semctl(sem1, 0, IPC_RMID, semun);
     msgctl(sched_msgq_id, IPC_RMID, (struct msqid_ds *)0);
+    if (processes_info != NULL)
+        free(processes_info);
     exit(0);
 }
