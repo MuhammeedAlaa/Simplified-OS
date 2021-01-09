@@ -1,7 +1,12 @@
 #include "headers.h"
 
+
+
+
 int main(int argc, char *argv[])
-{
+{   
+
+    
     initClk();
 
     // create message queue to communicate with process generator
