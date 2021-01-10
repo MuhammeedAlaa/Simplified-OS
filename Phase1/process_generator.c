@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
             struct processInfo *new = realloc(processes_info, sizeof(struct processInfo) * memory_size);
             if (new == NULL)
             {
-                perror("Error while reallocating memory");
+                perror("Error while reallocating memory\n");
             }
             processes_info = new;
         }
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     struct processInfo *new = realloc(processes_info, sizeof(struct processInfo) * number_of_processes);
     if (new == NULL)
     {
-        perror("Error while reallocating memory");
+        perror("Error while reallocating memory\n");
     }
     processes_info = new;
     printf("%d processes read from file \n", number_of_processes);
