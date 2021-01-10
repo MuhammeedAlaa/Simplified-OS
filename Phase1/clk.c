@@ -8,12 +8,16 @@
 #include "headers.h"
 
 int shmid;
+int processSem;
+int generatorSem;
 void up(int sem);
 
 /* Clear the resources before exit */
 void cleanup(int signum)
 {
     shmctl(shmid, IPC_RMID, NULL);
+    semctl(processSem, 0, IPC_RMID, 0);
+    semctl(generatorSem, 0, IPC_RMID, 0);
     printf("Clock terminating!\n");
     exit(0);
 }
@@ -40,23 +44,23 @@ int main(int argc, char *argv[])
     *shmaddr = clk; /* initialize shared memory */
 
     key_t key_id = ftok("keyfile", SEM1KEY);
-    int sem1 = semget(key_id, 1, 0666 | IPC_CREAT);
+    generatorSem = semget(key_id, 1, 0666 | IPC_CREAT);
+    key_id = ftok("keyfile", SEM_PROCESS_KEY);
+    processSem = semget(key_id, 1, 0666 | IPC_CREAT);
     while (1)
     {
         sleep(1);
         (*shmaddr)++;
-        up(sem1);
+        up(generatorSem);
+        up(processSem);
     }
 }
 
 void up(int sem)
 {
-    struct sembuf v_op;
-
-    v_op.sem_num = 0;
-    v_op.sem_op = 1;
-    v_op.sem_flg = !IPC_NOWAIT;
-    if (semop(sem, &v_op, 1) == -1)
+    union Semun semun;
+    semun.val = 1;
+    if (semctl(sem, 0, SETVAL, semun) == -1)
     {
         perror("error in up");
     }

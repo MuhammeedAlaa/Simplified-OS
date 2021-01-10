@@ -14,13 +14,14 @@ struct processInfo *processes_info = NULL;
 int main(int argc, char *argv[])
 {
     signal(SIGINT, clearResources);
+    signal(SIGUSR1, clearResources);
 
     /*
     1. allocate an array of structs, then read the processes info from the file and store them in the array one by one 
     */
     FILE *input_file;
     char str[MAXCHAR];
-    char *file_path = "testcases/processes_1.txt";
+    char *file_path = "testcases/processes_4.txt";
 
     int number_of_processes = 0, memory_size = 10;
     processes_info = (struct processInfo *)malloc(sizeof(struct processInfo) * memory_size);
@@ -100,15 +101,6 @@ int main(int argc, char *argv[])
         execl("scheduler.out", "scheduler", NULL);
     }
 
-    // 4. initialize clock so that the clock process starts to count seconds
-    initClk();
-
-    // 5. Send the information to the scheduler at the appropriate time.
-    /* 
-        Initialize the IPC Resources needed:
-         - A semaphore to synchronize with the clock time
-         - A message queue to send process data to the schedular through
-    */
     key_t key_id = ftok("keyfile", SEM1KEY);
     sem1 = semget(key_id, 1, 0666 | IPC_CREAT);
 
@@ -116,9 +108,35 @@ int main(int argc, char *argv[])
     sched_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
 
     int curr_process_index = 0, curr_number_of_processes;
+    // TODO: check dynamic memory allocation
+    
+    struct msgAlgorithm initMsg;
+    // prepare & send message to scheduler
+    initMsg.mtype = getpid() % 10000;
+    initMsg.algorithm = algorithm_number;
+    initMsg.opts = quantum;
+    int send_val = msgsnd(sched_msgq_id, &initMsg, sizeof(initMsg.algorithm) + sizeof(initMsg.opts), !IPC_NOWAIT);
+    if (send_val == -1)
+    {
+        perror("Error in sending from proc_gen\n");
+    }
+
     struct processInfo curr_process;
     struct msgbuff msg;
+    msg.finished = false;
 
+    // 4. Use this function after creating the clock process to initialize clock
+    initClk();
+    // To get time use this
+    int x = getClk();
+    printf("current time is %d\n", x);
+    // 5. Send the information to the scheduler at the appropriate time.
+    /* 
+        Initialize the IPC Resources needed:
+         - A semaphore to synchronize with the clock time
+         - A message queue to send process data to the schedular through
+    */
+    // 6. Send the information to the scheduler at the appropriate time.
     while (1)
     {
         // wait till the clock changes
@@ -131,8 +149,21 @@ int main(int argc, char *argv[])
             curr_process_index++;
             curr_number_of_processes++;
         }
+        if(curr_process_index == number_of_processes)
+            msg.finished = true;
 
-        if (curr_number_of_processes != 0)
+        if(curr_number_of_processes == 0)
+        {
+            // prepare & send message to scheduler
+            msg.mtype = getpid() % 10000;
+            msg.numberOfProcesses = curr_number_of_processes;
+            int send_val = msgsnd(sched_msgq_id, &msg, sizeof(msg.numberOfProcesses) + sizeof(msg.p_info) + sizeof(msg.finished), !IPC_NOWAIT);
+            if (send_val == -1)
+            {
+                perror("Error in sending from proc_gen\n");
+            }
+        }
+        else
         {
             curr_process_index = curr_process_index - curr_number_of_processes;
             // Send the proesses to the schedular one by one
@@ -149,7 +180,7 @@ int main(int argc, char *argv[])
                 msg.numberOfProcesses = curr_number_of_processes;
                 msg.p_info = curr_process;
 
-                int send_val = msgsnd(sched_msgq_id, &msg, sizeof(msg.numberOfProcesses) + sizeof(msg.p_info), !IPC_NOWAIT);
+                int send_val = msgsnd(sched_msgq_id, &msg, sizeof(msg.numberOfProcesses) + sizeof(msg.p_info) + sizeof(msg.finished), !IPC_NOWAIT);
                 validate(MSG_SEND, send_val);
                 curr_number_of_processes--;
             }

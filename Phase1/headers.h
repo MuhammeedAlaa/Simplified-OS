@@ -12,6 +12,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 typedef short bool;
 #define true 1
@@ -19,7 +20,17 @@ typedef short bool;
 
 #define SHKEY 300
 #define SEM1KEY 'B'
+#define SEM_PROCESS_KEY 'A'
 #define MSG_SCHED_KEY 'H'
+#define MSG_PROC_DOWN_KEY 'D'
+#define MSG_PROC_UP_KEY 'U'
+
+enum Algorithms
+{
+    HPF,
+    SRTN,
+    RR
+};
 
 // ================================================= Used Structs ===================================
 struct processInfo
@@ -28,6 +39,11 @@ struct processInfo
     int arrivalTime;
     int runTime;
     int priority;
+    bool isRunning;
+    int pid;
+    int remainingTime;
+    int finishTime;
+    int startTime;
 };
 
 struct msgbuff
@@ -35,6 +51,20 @@ struct msgbuff
     long mtype;
     int numberOfProcesses;
     struct processInfo p_info;
+    bool finished;
+};
+
+struct msgAlgorithm
+{
+    long mtype;
+    int algorithm;
+    int opts;
+};
+
+struct msgProcessTimeBuff
+{
+    long mtype;
+    int remainingTime;
 };
 
 /* arg for semctl system calls. */
@@ -46,67 +76,7 @@ union Semun
     struct seminfo *__buf; /* buffer for IPC_INFO */
     void *__pad;
 };
-// ====================================================================================================
-// ============================================ Priority Queue implementation ================================
-typedef struct node
-{
-    int data;
-    int priority;
 
-    struct node *next;
-
-} Node;
-
-Node *newNode(int d, int p)
-{
-    Node *temp = (Node *)malloc(sizeof(Node));
-    temp->data = d;
-    temp->priority = p;
-    temp->next = NULL;
-
-    return temp;
-}
-
-int peek(Node **head)
-{
-    return (*head)->data;
-}
-
-void pop(Node **head)
-{
-    Node *temp = *head;
-    (*head) = (*head)->next;
-    free(temp);
-}
-
-void push(Node **head, int d, int p)
-{
-    Node *start = (*head);
-
-    Node *temp = newNode(d, p);
-
-    if ((*head)->priority > p)
-    {
-        temp->next = *head;
-        (*head) = temp;
-    }
-    else
-    {
-
-        while (start->next != NULL &&
-               start->next->priority < p)
-        {
-            start = start->next;
-        }
-        temp->next = start->next;
-        start->next = temp;
-    }
-}
-
-int isEmpty(Node **head)
-{
-    return (*head) == NULL;
-}
 // =======================================================================================================
 // ================================ Clock control Funtions ============================
 ///==============================
