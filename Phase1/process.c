@@ -1,12 +1,12 @@
 #include "headers.h"
 
 /* Modify this file as needed*/
-int remainingtime;
+int remainingtime = 100; // an aribitrary initialization just to enter the loop once
 int semid;
 
 void down(int sem);
 
-int main(int agrc, char * argv[])
+int main(int agrc, char *argv[])
 {
     key_t key_id = ftok("keyfile", SEM_PROCESS_KEY);
     semid = semget(key_id, 1, 0666 | IPC_CREAT);
@@ -18,24 +18,30 @@ int main(int agrc, char * argv[])
 
     struct msgProcessTimeBuff msg;
     printf("process pid = %d \n", getpid());
-    int rec_val = msgrcv(proc_msgqdown_id, &msg, sizeof(msg.remainingTime), getpid(), !IPC_NOWAIT);
-    if (rec_val == -1)
-    {
-        perror("Error in recieving remaining time from schedular\n");
-    }
-    
-    remainingtime = msg.remainingTime;
-    printf("after message receive rem time = %d\n", remainingtime);
+    // int rec_val = msgrcv(proc_msgqdown_id, &msg, sizeof(msg.remainingTime), getpid(), !IPC_NOWAIT);
+    // if (rec_val == -1)
+    // {
+    //     perror("Error in recieving remaining time from schedular\n");
+    // }
+
+    // remainingtime = msg.remainingTime;
+    // printf("after message receive rem time = %d\n", remainingtime);
 
     initClk();
-    
+
     //TODO it needs to get the remaining time from somewhere
     //remainingtime = ??;
     while (remainingtime > 0)
     {
-        printf("current time seen in the process %d id before semaphore%d\n", getpid(), getClk());
-        down(semid);
-        printf("current time seen in the process %d id after semaphore%d\n", getpid(), getClk());
+        printf("current time seen in the process %d id before receiving message %d \n", getpid(), getClk());
+        // down(semid);
+        int rec_val = msgrcv(proc_msgqdown_id, &msg, sizeof(msg.remainingTime), getpid(), !IPC_NOWAIT);
+        if (rec_val == -1)
+        {
+            perror("Error in recieving remaining time from schedular\n");
+        }
+        printf("current time seen in the process %d id after receiving message %d \n", getpid(), getClk());
+        remainingtime = msg.remainingTime;
         remainingtime--;
         msg.remainingTime = remainingtime;
         msg.mtype = getpid();
@@ -45,7 +51,7 @@ int main(int agrc, char * argv[])
             perror("Error in sending remaining time from process\n");
         }
     }
-    
+
     printf("process %d sent to destory clk\n", getpid());
     destroyClk(false);
     printf("process %d terminated successfully\n", getpid());

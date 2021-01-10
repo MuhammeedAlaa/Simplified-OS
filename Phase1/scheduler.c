@@ -4,10 +4,11 @@
 
 int proc_msgqup_id, proc_msgqdown_id;
 minHeap readyQueueHPF;
+minHeap readyQueueSRTN;
 
 void createProcess(struct processInfo process, int algorithm, int quantaMax, struct hashmap *processTable);
 void executeAlgorithm(int algorithm, int quantaMax, int *runningProcessId, struct hashmap *processTable);
-void updateRunningProcessRemainingTime(int* runningProcessId, struct hashmap* processTable);
+void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *processTable);
 
 /* Clear the resources before exit */
 void cleanup(int signum);
@@ -23,18 +24,15 @@ int main(int argc, char *argv[])
     int algorithm, quantaMax;
     bool generator_is_done = false;
 
-
     // create message queue to communicate with process generator
     key_t key_id = ftok("keyfile", MSG_SCHED_KEY);
     int sched_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
-
 
     // create messege queues to communicate with the processes
     key_id = ftok("keyfile", MSG_PROC_UP_KEY);
     proc_msgqup_id = msgget(key_id, 0666 | IPC_CREAT);
     key_id = ftok("keyfile", MSG_PROC_DOWN_KEY);
     proc_msgqdown_id = msgget(key_id, 0666 | IPC_CREAT);
-
 
     // create messege buffers used in message queues
     struct msgAlgorithm initMsg;
@@ -49,7 +47,6 @@ int main(int argc, char *argv[])
     algorithm = initMsg.algorithm;
     quantaMax = initMsg.opts;
 
-
     // create process table and the dataStructure used as the ready list for the algorithm
     int seed = time(NULL);
     srand(time(NULL));
@@ -60,6 +57,7 @@ int main(int argc, char *argv[])
         readyQueueHPF = initMinHeap();
         break;
     case SRTN:
+        readyQueueSRTN = initMinHeap();
         break;
     case RR:
         break;
@@ -68,8 +66,6 @@ int main(int argc, char *argv[])
     }
     int runningProcessId = -1;
     initClk();
-
-
 
     while (!generator_is_done || !isEmpty(&readyQueueHPF) || runningProcessId != -1)
     {
@@ -98,10 +94,9 @@ int main(int argc, char *argv[])
 
         executeAlgorithm(algorithm, quantaMax, &runningProcessId, processTable);
     }
-    destroyClk(false);
+    // destroyClk(false);
     cleanup(0);
 }
-
 
 // function used in the hashmap to compare two processes for equality
 int process_compare(const void *a, const void *b, void *udata)
@@ -152,7 +147,6 @@ void createProcess(struct processInfo process, int algorithm, int quantaMax, str
         execl("process.out", "process", NULL);
     }
     newProcess.pid = pid;
-
     // insert the process in the appropriate data structure according to the algorithm
     switch (algorithm)
     {
@@ -160,6 +154,7 @@ void createProcess(struct processInfo process, int algorithm, int quantaMax, str
         push(&readyQueueHPF, newProcess.priority, newProcess.id);
         break;
     case SRTN:
+        push(&readyQueueSRTN, newProcess.remainingTime, newProcess.id);
         break;
     case RR:
         break;
@@ -186,31 +181,121 @@ void executeAlgorithm(int algorithm, int quantaMax, int *runningProcessId, struc
     switch (algorithm)
     {
     case HPF:
-        if (*runningProcessId == -1 && !isEmpty(&readyQueueHPF))
+        if (!isEmpty(&readyQueueHPF) || *runningProcessId != -1)
         {
-            // get next process to be scheduled from the process table and remove it from ready list
-            *runningProcessId = peek(&readyQueueHPF)->data;
-            struct processInfo process = {.id = *runningProcessId};
-            struct processInfo *processPtr = hashmap_get(processTable, &process);
-            pop(&readyQueueHPF);
-
-            // change the status, start time of the process to be scheduled
-            processPtr->isRunning = true;
-            processPtr->startTime = getClk();
-            processPtr = hashmap_set(processTable, processPtr);
-
-            // send messege to the process with its remaining time
-            processMsg.mtype = processPtr->pid;
-            processMsg.remainingTime = processPtr->remainingTime;
-            int send_val = msgsnd(proc_msgqdown_id, &processMsg, sizeof(processMsg.remainingTime), !IPC_NOWAIT);
-            if (send_val == -1)
+            if (*runningProcessId == -1)
             {
-                perror("Error in sending from schedular to process\n");
+                // get next process to be scheduled from the process table and remove it from ready list
+                *runningProcessId = peek(&readyQueueHPF)->data;
+                pop(&readyQueueHPF);
+                struct processInfo process = {.id = *runningProcessId};
+                struct processInfo *processPtr = hashmap_get(processTable, &process);
+                // change the status, start time of the process to be scheduled
+                processPtr->isRunning = true;
+                processPtr->startTime = getClk();
+                processPtr = hashmap_set(processTable, processPtr);
+
+                // send messege to the process with its remaining time
+                processMsg.mtype = processPtr->pid;
+                processMsg.remainingTime = processPtr->remainingTime;
+                int send_val = msgsnd(proc_msgqdown_id, &processMsg, sizeof(processMsg.remainingTime), !IPC_NOWAIT);
+                if (send_val == -1)
+                {
+                    perror("Error in sending from schedular to process\n");
+                }
+                printf("schedular message sent to the process %d with its remaining time\n", processPtr->pid);
             }
-            printf("schedular message sent to the process %d with its remaining time\n", processPtr->pid);
+            // if there is a process running
+            else
+            {
+                struct processInfo process = {.id = *runningProcessId};
+                struct processInfo *processPtr = hashmap_get(processTable, &process);
+                processMsg.mtype = processPtr->pid;
+                processMsg.remainingTime = processPtr->remainingTime;
+                int send_val = msgsnd(proc_msgqdown_id, &processMsg, sizeof(processMsg.remainingTime), !IPC_NOWAIT);
+                if (send_val == -1)
+                {
+                    perror("Error in sending from schedular to process\n");
+                }
+                printf("schedular message sent to the process %d with its remaining time\n", processPtr->pid);
+            }
         }
         break;
     case SRTN:
+        if (!isEmpty(&readyQueueSRTN) || *runningProcessId != -1)
+        {
+            if (*runningProcessId == -1)
+            {
+                // schedule the next process in the queue
+                // get next process to be scheduled from the process table and remove it from ready list
+                *runningProcessId = peek(&readyQueueSRTN)->data;
+                struct processInfo process = {.id = *runningProcessId};
+                struct processInfo *processPtr = hashmap_get(processTable, &process);
+                pop(&readyQueueSRTN);
+                processPtr->isRunning = true;
+                // we have two cases
+                // case 1 : the next process hasn't started before (we need to set its starting time)
+                // case 2 : the next process has started before but was prempted by another arriving process
+                if (processPtr->runTime == processPtr->remainingTime)
+                    processPtr->startTime = getClk();
+                // send messege to the process with its remaining time
+                processMsg.mtype = processPtr->pid;
+                processMsg.remainingTime = processPtr->remainingTime;
+                int send_val = msgsnd(proc_msgqdown_id, &processMsg, sizeof(processMsg.remainingTime), !IPC_NOWAIT);
+                if (send_val == -1)
+                {
+                    perror("Error in sending from schedular to process\n");
+                }
+                printf("schedular message sent to the process %d with its remaining time\n", processPtr->pid);
+            }
+            else
+            {
+                // get the remaining time of the currently running process
+                struct processInfo process = {.id = *runningProcessId};
+                struct processInfo *runningProcessPtr = hashmap_get(processTable, &process);
+                int runningProcessRemainingTime = runningProcessPtr->remainingTime;
+                if (!isEmpty(&readyQueueSRTN))
+                {
+                    // get the arriving process with the min remaining time
+                    int minProcessRemainingTime = peek(&readyQueueSRTN)->priority;
+
+                    // compare it to the currently running process remaining time
+                    /*
+                - if no process arrives then the process at the top of the queue will definelty have a 
+                remaining time larger than the currently running process or else it would have been scheduled
+                instead of the currently running process when it arrived
+                - assume we only pre-empt if the running time of the new process is less than the one currently
+                running
+                */
+                    if (minProcessRemainingTime < runningProcessRemainingTime)
+                    {
+                        // get the id of the process with the least running time
+                        int minProcessId = peek(&readyQueueSRTN)->data;
+                        // remove the process with the least remaining time from the ready queue to make it running
+                        pop(&readyQueueSRTN);
+                        // pre-empt the currently running process
+                        runningProcessPtr->isRunning = 0;
+                        push(&readyQueueSRTN, runningProcessPtr->remainingTime, runningProcessPtr->id);
+                        // set the process with the least remaining time as the running process
+                        *runningProcessId = minProcessId;
+                        process.id = *runningProcessId;
+                        runningProcessPtr = (struct processInfo *)hashmap_get(processTable, &process);
+                        runningProcessPtr->isRunning = 1;
+                        // set the process new process starting time and send a message with remaining time
+                        runningProcessPtr->startTime = getClk();
+                    }
+                }
+                // send messege to the process with its remaining time
+                processMsg.mtype = runningProcessPtr->pid;
+                processMsg.remainingTime = runningProcessPtr->remainingTime;
+                int send_val = msgsnd(proc_msgqdown_id, &processMsg, sizeof(processMsg.remainingTime), !IPC_NOWAIT);
+                if (send_val == -1)
+                {
+                    perror("Error in sending from schedular to process\n");
+                }
+                printf("schedular message sent to the process %d with its remaining time\n", runningProcessPtr->pid);
+            }
+        }
         break;
     case RR:
         break;
@@ -225,7 +310,7 @@ void executeAlgorithm(int algorithm, int quantaMax, int *runningProcessId, struc
  * @param processTable the process table that contains the processes active now in the scheduler
  * 
  */
-void updateRunningProcessRemainingTime(int* runningProcessId, struct hashmap* processTable)
+void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *processTable)
 {
     // get the process control block
     struct processInfo process = {.id = *runningProcessId};
@@ -250,6 +335,7 @@ void updateRunningProcessRemainingTime(int* runningProcessId, struct hashmap* pr
         processPtr->isRunning = 0;
         processPtr->finishTime = getClk() + 1;
     }
+
     hashmap_set(processTable, processPtr);
 }
 
