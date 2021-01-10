@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 
     int curr_process_index = 0, curr_number_of_processes;
     // TODO: check dynamic memory allocation
-    
+
     struct msgAlgorithm initMsg;
     // prepare & send message to scheduler
     initMsg.mtype = getpid() % 10000;
@@ -125,9 +125,8 @@ int main(int argc, char *argv[])
     struct msgbuff msg;
     msg.finished = false;
 
-    // 4. Use this function after creating the clock process to initialize clock
+    // 4. initialize clock
     initClk();
-    // To get time use this
     int x = getClk();
     printf("current time is %d\n", x);
     // 5. Send the information to the scheduler at the appropriate time.
@@ -144,15 +143,15 @@ int main(int argc, char *argv[])
         int currentTime = getClk();
         curr_number_of_processes = 0;
         // count number of processes to be sent to the schedular at this moment of time
-        while (processes_info[curr_process_index].arrivalTime == currentTime)
+        while (curr_process_index < number_of_processes && processes_info[curr_process_index].arrivalTime == currentTime)
         {
             curr_process_index++;
             curr_number_of_processes++;
         }
-        if(curr_process_index == number_of_processes)
+        if (curr_process_index == number_of_processes)
             msg.finished = true;
 
-        if(curr_number_of_processes == 0)
+        if (curr_number_of_processes == 0)
         {
             // prepare & send message to scheduler
             msg.mtype = getpid() % 10000;

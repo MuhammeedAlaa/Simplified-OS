@@ -16,13 +16,14 @@ int main(int argc, char *argv[])
 {
     char *testnum = argv[1];
     FILE *pFile;
-    printf("aaaaaaaaaaaa\n");
+    // printf("aaaaaaaaaaaa\n");
     strcat(testnum, ".txt");
-    printf("aaaaaaaaaaaabb\n");
-    char name[] = "testcases/processes_";
-    printf("aaaaaaaaaaassss\n");
+    // printf("aaaaaaaaaaaabb\n");
+    char *name;
+    strcpy(name, "testcases/processes_");
+    // printf("aaaaaaaaaaassss\n");
     strcat(name, testnum);
-    printf("aaaaaaaaaaaadd\n");
+    // printf("aaaaaaaaaaaadd\n");
     pFile = fopen(name, "w");
     int no;
     struct processData pData;
@@ -37,7 +38,7 @@ int main(int argc, char *argv[])
         //[min-max] = rand() % (max_number + 1 - minimum_number) + minimum_number
         pData.id = i;
         pData.arrivaltime += rand() % (11); //processes arrives in order
-        pData.runningtime = rand() % (5) + 1;
+        pData.runningtime = rand() % (30);
         pData.priority = rand() % (11);
         fprintf(pFile, "%d\t%d\t%d\t%d\n", pData.id, pData.arrivaltime, pData.runningtime, pData.priority);
     }
