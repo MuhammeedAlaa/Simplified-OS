@@ -1,13 +1,15 @@
 #include "headers.h"
 #include "hashmap.h"
 #include "priorityQueue.h"
+#include "queue.h"
 
 int proc_msgqup_id, proc_msgqdown_id;
 minHeap readyQueueHPF;
 minHeap readyQueueSRTN;
+queue readyQueueRR;
 
 void createProcess(struct processInfo process, int algorithm, int quantaMax, struct hashmap *processTable);
-void executeAlgorithm(int algorithm, int quantaMax, int *runningProcessId, struct hashmap *processTable);
+void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *runningProcessId, struct hashmap *processTable);
 void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *processTable);
 
 /* Clear the resources before exit */
@@ -21,7 +23,7 @@ uint64_t process_hash(const void *item, uint64_t seed0, uint64_t seed1);
 int main(int argc, char *argv[])
 {
     signal(SIGINT, cleanup);
-    int algorithm, quantaMax;
+    int algorithm, quantaMax, remaingingQuanta;
     bool generator_is_done = false;
 
     // create message queue to communicate with process generator
@@ -60,6 +62,7 @@ int main(int argc, char *argv[])
         readyQueueSRTN = initMinHeap();
         break;
     case RR:
+        readyQueueRR = initQueue();
         break;
     default:
         break;
@@ -67,7 +70,7 @@ int main(int argc, char *argv[])
     int runningProcessId = -1;
     initClk();
 
-    while (!generator_is_done || !isEmpty(&readyQueueHPF) || runningProcessId != -1)
+    while (!generator_is_done || !isEmpty(&readyQueueHPF) || !isEmptyQueue(&readyQueueRR) || runningProcessId != -1)
     {
 
         if (runningProcessId != -1)
@@ -91,9 +94,9 @@ int main(int argc, char *argv[])
         printf("```````````````````````````````````````````\n");
         printf("at time step: %d we have: \n", getClk());
         hashmap_scan(processTable, process_iter, NULL);
-
-        executeAlgorithm(algorithm, quantaMax, &runningProcessId, processTable);
+        executeAlgorithm(algorithm, quantaMax, &remaingingQuanta, &runningProcessId, processTable);
     }
+
     // destroyClk(false);
     cleanup(0);
 }
@@ -138,6 +141,7 @@ void createProcess(struct processInfo process, int algorithm, int quantaMax, str
         .runTime = process.runTime,
         .remainingTime = process.runTime,
         .finishTime = -1,
+        .startTime = -1,
         .isRunning = false};
     int pid = fork();
     if (pid == -1)
@@ -157,6 +161,7 @@ void createProcess(struct processInfo process, int algorithm, int quantaMax, str
         push(&readyQueueSRTN, newProcess.remainingTime, newProcess.id);
         break;
     case RR:
+        pushQueue(&readyQueueRR, newProcess.id);
         break;
     default:
         break;
@@ -174,10 +179,9 @@ void createProcess(struct processInfo process, int algorithm, int quantaMax, str
  * @param processTable the process table that contains the processes active now in the scheduler
  * 
  */
-void executeAlgorithm(int algorithm, int quantaMax, int *runningProcessId, struct hashmap *processTable)
+void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *runningProcessId, struct hashmap *processTable)
 {
     struct msgProcessTimeBuff processMsg;
-
     switch (algorithm)
     {
     case HPF:
@@ -298,6 +302,83 @@ void executeAlgorithm(int algorithm, int quantaMax, int *runningProcessId, struc
         }
         break;
     case RR:
+        if (!isEmptyQueue(&readyQueueRR) || *runningProcessId != -1)
+        {
+            if (*runningProcessId == -1)
+            {
+                // schedule the next process in the queue
+                // get next process to be scheduled from the process table and remove it from ready list
+                *runningProcessId = front(&readyQueueRR);
+                struct processInfo process = {.id = *runningProcessId};
+                struct processInfo *processPtr = hashmap_get(processTable, &process);
+                popQueue(&readyQueueRR);
+                processPtr->isRunning = true;
+                // intailize quanta of new process
+                *remaingingQuanta = quantaMax - 1;
+                // we have two cases
+                // case 1 : the next process hasn't started before (we need to set its starting time)
+                // case 2 : the next process has started before but was prempted by another arriving process
+                // set the process new process starting time and send a message with remaining time
+                if (processPtr->startTime == -1)
+                    processPtr->startTime = getClk();
+
+                // send messege to the process with its remaining time
+                processMsg.mtype = processPtr->pid;
+                processMsg.remainingTime = processPtr->remainingTime;
+                int send_val = msgsnd(proc_msgqdown_id, &processMsg, sizeof(processMsg.remainingTime), !IPC_NOWAIT);
+                if (send_val == -1)
+                {
+                    perror("Error in sending from schedular to process\n");
+                }
+                printf("schedular message sent to the process %d with its remaining time\n", processPtr->pid);
+            }
+            else
+            {
+                // get the remaining time of the currently running process
+                struct processInfo process = {.id = *runningProcessId};
+                struct processInfo *runningProcessPtr = hashmap_get(processTable, &process);
+
+                if (*remaingingQuanta == 0)
+                {
+                    if (!isEmptyQueue(&readyQueueRR))
+                    {
+                        // get the id of next process to run
+                        int currentProcessId = front(&readyQueueRR);
+                        // remove next process from the ready queue to make it running
+                        popQueue(&readyQueueRR);
+                        // pre-empt the currently running process
+                        runningProcessPtr->isRunning = 0;
+                        pushQueue(&readyQueueRR, runningProcessPtr->id);
+                        // set next process  as the running process
+                        *runningProcessId = currentProcessId;
+                        process.id = *runningProcessId;
+                        runningProcessPtr = (struct processInfo *)hashmap_get(processTable, &process);
+                        runningProcessPtr->isRunning = 1;
+                        // set the process new process starting time and send a message with remaining time
+                        if (runningProcessPtr->startTime == -1)
+                            runningProcessPtr->startTime = getClk();
+
+                        // intailize quanta of new process
+                        *remaingingQuanta = quantaMax - 1;
+                    }
+                }
+                else
+                    *remaingingQuanta = *remaingingQuanta - 1;
+
+                // printf("quanta : %d   : running %d \n", *remaingingQuanta, *runningProcessId);
+                // printf("------------------------------\n");
+
+                // send messege to the process with its remaining time
+                processMsg.mtype = runningProcessPtr->pid;
+                processMsg.remainingTime = runningProcessPtr->remainingTime;
+                int send_val = msgsnd(proc_msgqdown_id, &processMsg, sizeof(processMsg.remainingTime), !IPC_NOWAIT);
+                if (send_val == -1)
+                {
+                    perror("Error in sending from schedular to process\n");
+                }
+                printf("schedular message sent to the process %d with its remaining time\n", runningProcessPtr->pid);
+            }
+        }
         break;
     default:
         break;
