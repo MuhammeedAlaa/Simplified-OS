@@ -46,6 +46,19 @@ struct processInfo
     int startTime;
 };
 
+struct processStats
+{
+    int id;
+    int arrivalTime;
+    int runTime;
+    int remainingTime;
+    int finishTime;
+    int startTime;
+    int waitingTime;
+    int TA;
+    int WTA;
+};
+
 struct msgbuff
 {
     long mtype;
