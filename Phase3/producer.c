@@ -1,53 +1,4 @@
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/shm.h>
-#include <sys/sem.h>
-#include <signal.h>
-
-typedef short bool;
-#define true 1
-#define false 0
-
-const int BUFFER_SIZE = 20;
-enum error_types
-{
-    CREATION,
-    EMPTY_SEM_INIT,
-    EMPTY_SEM_GET_VAL,
-    EMPTY_SEM_SET_VAL,
-    FULL_SEM_INIT,
-    FULL_SEM_GET_VAL,
-    FULL_SEM_SET_VAL,
-    MUTEX_SEM_SET_VAL,
-    MSG_RECEIVE,
-    MSG_SEND,
-    SHM_ATTCH,
-    SEM_DOWN,
-    SEM_UP
-};
-
-struct msgbuff
-{
-    long mtype;
-    char mtext[1];
-};
-
-/* arg for semctl system calls. */
-union Semun
-{
-    int val;               /* value for SETVAL */
-    struct semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
-    ushort *array;         /* array for GETALL & SETALL */
-    struct seminfo *__buf; /* buffer for IPC_INFO */
-    void *__pad;
-};
+#include "headers.h"
 
 void writer(int shmid, int intMsg, int index);
 int readIndex(int shmid);
@@ -66,6 +17,10 @@ int main()
     key_t key_id;
     union Semun semun;
     int up_msgq_id, down_msgq_id, send_val, rec_val, producerQIndex, consumerQIndex, shmid, muxLock, full, empty;
+    
+    key_id = ftok("keyfile", 64);
+    down_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
+    
     key_id = ftok("keyfile", 65);
     up_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
 
@@ -88,38 +43,45 @@ int main()
     empty = semget(key_id, 1, 0666 | IPC_CREAT);
 
     // check for any creation error
-    validate(CREATION, up_msgq_id | shmid | muxLock | full | empty);
+    validate(CREATION, up_msgq_id | down_msgq_id | shmid | muxLock | full | empty);
 
     int buffer_pointer;
     int i = 1;
     while (1)
     {
-        /* Insert into buffer */
+        down(empty);
         down(muxLock);
-
-        if (isFull(producerQIndex, consumerQIndex))
-        {
-
-            struct msgbuff message;
-            rec_val = msgrcv(up_msgq_id, &message, sizeof(message.mtext), 0, !IPC_NOWAIT);
-            validate(MSG_RECEIVE, rec_val);
+        /* Insert into buffer */
+        printf("front is %d and rear is %d \n", readIndex(consumerQIndex), readIndex(producerQIndex));
+        // if (isFull(producerQIndex, consumerQIndex))
+        // {
+        //     printf("full produce\n");
+        //     struct msgbuff message;
+        //     rec_val = msgrcv(up_msgq_id, &message, sizeof(message.mtext), 0, !IPC_NOWAIT);
+        //     validate(MSG_RECEIVE, rec_val);
+        //     produce(consumerQIndex, producerQIndex, shmid, i);
+        // }
+        // else if (isEmpty(consumerQIndex))
+        // {
+        //     printf("empty produce\n");
+        //     produce(consumerQIndex, producerQIndex, shmid, i);
+        //     struct msgbuff message;
+        //     send_val = msgsnd(down_msgq_id, &message, sizeof(message.mtext), !IPC_NOWAIT);
+        //     validate(MSG_SEND, send_val);
+        // }
+        // else
+        // {
+            printf("normal produce\n");
             produce(consumerQIndex, producerQIndex, shmid, i);
-        }
-        else if (isEmpty(consumerQIndex))
-        {
-            produce(consumerQIndex, producerQIndex, shmid, i);
-            struct msgbuff message;
-            send_val = msgsnd(up_msgq_id, &message, sizeof(message.mtext), !IPC_NOWAIT);
-            validate(MSG_SEND, send_val);
-        }
-        else
-        {
-            produce(consumerQIndex, producerQIndex, shmid, i);
-        }
+        // }
 
-        up(muxLock);
-        i++;
         showMem(shmid);
+        i++;
+        up(muxLock);
+        up(full);
+        // printf("front is %d and rear is %d \n", readIndex(consumerQIndex), readIndex(producerQIndex));
+        printf("```````````````````````````````````\n");
+        usleep(1000000);
     }
     return 0;
 }
@@ -131,6 +93,7 @@ void produce(int consumerQIndex, int producerQIndex, int shmid, int i)
     if (front == -1)
     {
         front = 0;
+        writeIndex(consumerQIndex, front);
     }
     rear = (rear + 1) % BUFFER_SIZE;
     writeIndex(producerQIndex, rear);
@@ -140,11 +103,11 @@ void produce(int consumerQIndex, int producerQIndex, int shmid, int i)
 bool isFull(int shmidP, int shmidC)
 {
 
-    void *shmaddr = shmat(shmidP, (void *)0, 0);
+    void *shmaddr = shmat(shmidC, (void *)0, 0);
     int front = *(int *)shmaddr;
     shmdt(shmaddr);
 
-    shmaddr = shmat(shmidC, (void *)0, 0);
+    shmaddr = shmat(shmidP, (void *)0, 0);
     int rear = *(int *)shmaddr;
     shmdt(shmaddr);
 
