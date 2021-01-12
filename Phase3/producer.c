@@ -11,6 +11,10 @@
 #include <sys/sem.h>
 #include <signal.h>
 
+typedef short bool;
+#define true 1
+#define false 0
+
 const int BUFFER_SIZE = 20;
 enum error_types
 {
@@ -29,7 +33,6 @@ enum error_types
     SEM_UP
 };
 
-
 struct msgbuff
 {
     long mtype;
@@ -47,92 +50,161 @@ union Semun
 };
 
 void writer(int shmid, int intMsg, int index);
+int readIndex(int shmid);
+void writeIndex(int shmid, int val);
+bool isFull(int shmidP, int shmidC);
+bool isEmpty(int shmid);
+void showMem(int shmid);
 void up(int sem);
 void down(int sem);
-void handler(int signum);
 void validate(int errorNumber, int checkVar);
-key_t key_id;
-union Semun semun;
-int up_msgq_id, down_msgq_id, send_val, rec_val, shmid, muxLock, full, empty;
+void produce(int consumerQIndex, int producerQIndex, int shmid, int i);
+
 int main()
 {
 
-    signal(SIGINT, handler);
-    
+    key_t key_id;
+    union Semun semun;
+    int up_msgq_id, down_msgq_id, send_val, rec_val, producerQIndex, consumerQIndex, shmid, muxLock, full, empty;
     key_id = ftok("keyfile", 65);
     up_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
-    // key_id = ftok("keyfile", 66);
-    // down_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
+
+    key_id = ftok("keyfile", 66);
+    producerQIndex = shmget(key_id, sizeof(int), 0666 | IPC_CREAT);
 
     key_id = ftok("keyfile", 67);
-    shmid = shmget(key_id, BUFFER_SIZE * sizeof(int), 0666 | IPC_CREAT);
+    consumerQIndex = shmget(key_id, sizeof(int), 0666 | IPC_CREAT);
 
     key_id = ftok("keyfile", 68);
-    muxLock = semget(key_id, 1, 0666 | IPC_CREAT);
+    shmid = shmget(key_id, BUFFER_SIZE * sizeof(int), 0666 | IPC_CREAT);
 
     key_id = ftok("keyfile", 69);
-    full = semget(key_id, 1, 0666 | IPC_CREAT);
+    muxLock = semget(key_id, 1, 0666 | IPC_CREAT);
 
     key_id = ftok("keyfile", 70);
+    full = semget(key_id, 1, 0666 | IPC_CREAT);
+
+    key_id = ftok("keyfile", 71);
     empty = semget(key_id, 1, 0666 | IPC_CREAT);
 
     // check for any creation error
     validate(CREATION, up_msgq_id | shmid | muxLock | full | empty);
 
-    semun.val = 1;
-    validate(MUTEX_SEM_SET_VAL, semctl(muxLock, 0, SETVAL, semun));
-
-    semun.val = 0;
-    validate(FULL_SEM_SET_VAL, semctl(full, 0, SETVAL, semun));
-
-    semun.val = BUFFER_SIZE;
-    validate(EMPTY_SEM_SET_VAL, semctl(empty, 0, SETVAL, semun));
-
-    int buffer_pointer = 0;
+    int buffer_pointer;
     int i = 1;
-    while(1)
+    while (1)
     {
         /* Insert into buffer */
-        down(empty);
         down(muxLock);
 
-        int fullCount = semctl(full, 0, GETVAL, semun);
-        validate(FULL_SEM_GET_VAL, fullCount);
-        if (fullCount == BUFFER_SIZE)
+        if (isFull(producerQIndex, consumerQIndex))
         {
+
             struct msgbuff message;
             rec_val = msgrcv(up_msgq_id, &message, sizeof(message.mtext), 0, !IPC_NOWAIT);
             validate(MSG_RECEIVE, rec_val);
+            produce(consumerQIndex, producerQIndex, shmid, i);
         }
-
-        writer(shmid, i, buffer_pointer);
-        buffer_pointer = (buffer_pointer + 1) % BUFFER_SIZE;
-
-
-        int emptyCount = semctl(empty, 0, GETVAL, semun);
-        validate(EMPTY_SEM_GET_VAL, emptyCount);
-        if (emptyCount == BUFFER_SIZE)
+        else if (isEmpty(consumerQIndex))
         {
+            produce(consumerQIndex, producerQIndex, shmid, i);
             struct msgbuff message;
             send_val = msgsnd(up_msgq_id, &message, sizeof(message.mtext), !IPC_NOWAIT);
             validate(MSG_SEND, send_val);
         }
+        else
+        {
+            produce(consumerQIndex, producerQIndex, shmid, i);
+        }
 
-        sleep(1);
         up(muxLock);
-        up(full);
         i++;
+        showMem(shmid);
     }
     return 0;
+}
+
+void produce(int consumerQIndex, int producerQIndex, int shmid, int i)
+{
+    int front = readIndex(consumerQIndex);
+    int rear = readIndex(producerQIndex);
+    if (front == -1)
+    {
+        front = 0;
+    }
+    rear = (rear + 1) % BUFFER_SIZE;
+    writeIndex(producerQIndex, rear);
+    writer(shmid, i, rear);
+}
+
+bool isFull(int shmidP, int shmidC)
+{
+
+    void *shmaddr = shmat(shmidP, (void *)0, 0);
+    int front = *(int *)shmaddr;
+    shmdt(shmaddr);
+
+    shmaddr = shmat(shmidC, (void *)0, 0);
+    int rear = *(int *)shmaddr;
+    shmdt(shmaddr);
+
+    if (front == 0 && rear == BUFFER_SIZE - 1)
+    {
+        return true;
+    }
+    if (front == rear + 1)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool isEmpty(int shmid)
+{
+    void *shmaddr = shmat(shmid, (void *)0, 0);
+    int front = *(int *)shmaddr;
+    shmdt(shmaddr);
+    if (front == -1)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void writer(int shmid, int intMsg, int index)
 {
     void *shmaddr = shmat(shmid, (void *)0, 0);
     validate(SHM_ATTCH, shmaddr == (char *)-1 ? -1 : 0);
-
-    printf("Produced : %i\n", intMsg);
+    printf("Produced : %i at index %i\n", intMsg, index);
     *((int *)shmaddr + index * sizeof(int)) = intMsg;
+    shmdt(shmaddr);
+}
+void showMem(int shmid)
+{
+    void *shmaddr = shmat(shmid, (void *)0, 0);
+    for (int i = 0; i < BUFFER_SIZE; i++)
+        printf(" %i", *((int *)shmaddr + i * sizeof(int)));
+    printf("\n");
+    shmdt(shmaddr);
+}
+
+int readIndex(int shmid)
+{
+    void *shmaddr = shmat(shmid, (void *)0, 0);
+    validate(SHM_ATTCH, shmaddr == (char *)-1 ? -1 : 0);
+    int index = *(int *)shmaddr;
+    shmdt(shmaddr);
+    return index;
+}
+
+void writeIndex(int shmid, int val)
+{
+    void *shmaddr = shmat(shmid, (void *)0, 0);
+    validate(SHM_ATTCH, shmaddr == (char *)-1 ? -1 : 0);
+    *(int *)shmaddr = val;
     shmdt(shmaddr);
 }
 
@@ -155,7 +227,6 @@ void up(int sem)
     v_op.sem_flg = !IPC_NOWAIT;
     validate(SEM_UP, semop(sem, &v_op, 1));
 }
-
 
 void validate(int errorNumber, int checkVar)
 {
@@ -208,16 +279,4 @@ void validate(int errorNumber, int checkVar)
         break;
     }
     exit(-1);
-}
-
-
-void handler(int signum)
-{
-    shmctl(shmid, IPC_RMID, (struct shmid_ds *)0);
-    semctl(muxLock, 0, IPC_RMID, semun);
-    semctl(full, 0, IPC_RMID, semun);
-    semctl(empty, 0, IPC_RMID, semun);
-    msgctl(up_msgq_id, IPC_RMID, (struct msqid_ds *)0);
-    //msgctl(down_msgq_id, IPC_RMID, (struct msqid_ds *)0);
-    exit(0);
 }
