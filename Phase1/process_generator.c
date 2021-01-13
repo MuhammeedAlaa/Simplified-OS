@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     */
     FILE *input_file;
     char str[MAXCHAR];
-    char *file_path = "testcases/processes.txt";
+    char *file_path = "testcases/processes_doc.txt";
 
     int number_of_processes = 0, memory_size = 10;
     processes_info = (struct processInfo *)malloc(sizeof(struct processInfo) * memory_size);

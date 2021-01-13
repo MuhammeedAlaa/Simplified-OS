@@ -56,7 +56,7 @@ struct processStats
     int startTime;
     int waitingTime;
     int TA;
-    int WTA;
+    float WTA;
 };
 
 struct msgbuff
