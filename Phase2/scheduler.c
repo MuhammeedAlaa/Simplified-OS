@@ -2,6 +2,7 @@
 #include "hashmap.h"
 #include "priorityQueue.h"
 #include "queue.h"
+#include "buddy.h"
 
 int proc_msgqup_id, proc_msgqdown_id;
 minHeap readyQueueHPF;
@@ -82,7 +83,7 @@ int main(int argc, char *argv[])
     }
     int runningProcessId = -1;
     initClk();
-
+    //TODO: Add if Empty Queue is not empty
     while (!generator_is_done || !isEmpty(&readyQueueHPF) || !isEmpty(&readyQueueSRTN) || !isEmptyQueue(&readyQueueRR) || runningProcessId != -1)
     {
 
@@ -127,7 +128,7 @@ int process_compare(const void *a, const void *b, void *udata)
 bool process_iter(const void *item, void *udata)
 {
     const struct processInfo *process = item;
-    printf("process: (id=%d) (arrivalTime=%d) (runTime=%d) (priority=%d) (pid=%d) (state=%d) (remainingTime=%d) (finishTime=%d) (startTime=%d)\n", process->id, process->arrivalTime, process->runTime, process->priority, process->pid, process->isRunning, process->remainingTime, process->finishTime, process->startTime);
+    printf("process: (id=%d) (arrivalTime=%d) (runTime=%d) (priority=%d) (pid=%d) (state=%d) (remainingTime=%d) (finishTime=%d) (startTime=%d) (memsize=%d) \n", process->id, process->arrivalTime, process->runTime, process->priority, process->pid, process->isRunning, process->remainingTime, process->finishTime, process->startTime, process->memsize);
     return true;
 }
 
@@ -173,6 +174,7 @@ void createProcess(struct processInfo process, int algorithm, int quantaMax, str
         .priority = process.priority,
         .runTime = process.runTime,
         .remainingTime = process.runTime,
+        .memsize = process.memsize,
         .finishTime = -1,
         .startTime = -1,
         .isRunning = false };
@@ -187,6 +189,7 @@ void createProcess(struct processInfo process, int algorithm, int quantaMax, str
         .waitingTime = 0,
         .TA = -1,
         .WTA = -1 };
+    //TODO bool isAllocated = allocateMem();
     int pid = fork();
     if (pid == -1)
         perror("error in forking new process");
@@ -474,6 +477,8 @@ void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *pr
         processPtr_stats->finishTime = getClk() + 1;
 
         // printStatsLog(runningProcessId, statsTable, 3);
+        //TODO deAllocateMem()
+        //TODO pop waitingQueue -> allocateMem
 
     }
 
