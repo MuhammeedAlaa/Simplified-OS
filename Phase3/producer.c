@@ -1,282 +1,73 @@
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/shm.h>
-#include <sys/sem.h>
-#include <signal.h>
+#include "headers.h"
 
-typedef short bool;
-#define true 1
-#define false 0
-
-const int BUFFER_SIZE = 20;
-enum error_types
-{
-    CREATION,
-    EMPTY_SEM_INIT,
-    EMPTY_SEM_GET_VAL,
-    EMPTY_SEM_SET_VAL,
-    FULL_SEM_INIT,
-    FULL_SEM_GET_VAL,
-    FULL_SEM_SET_VAL,
-    MUTEX_SEM_SET_VAL,
-    MSG_RECEIVE,
-    MSG_SEND,
-    SHM_ATTCH,
-    SEM_DOWN,
-    SEM_UP
-};
-
-struct msgbuff
-{
-    long mtype;
-    char mtext[1];
-};
-
-/* arg for semctl system calls. */
-union Semun
-{
-    int val;               /* value for SETVAL */
-    struct semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
-    ushort *array;         /* array for GETALL & SETALL */
-    struct seminfo *__buf; /* buffer for IPC_INFO */
-    void *__pad;
-};
-
-void writer(int shmid, int intMsg, int index);
-int readIndex(int shmid);
-void writeIndex(int shmid, int val);
-bool isFull(int shmidP, int shmidC);
-bool isEmpty(int shmid);
-void showMem(int shmid);
-void up(int sem);
-void down(int sem);
-void validate(int errorNumber, int checkVar);
-void produce(int consumerQIndex, int producerQIndex, int shmid, int i);
+void produce(int producerIndex, int consumerIndex, int shmid, int val);
 
 int main()
 {
 
-    key_t key_id;
-    union Semun semun;
-    int up_msgq_id, down_msgq_id, send_val, rec_val, producerQIndex, consumerQIndex, shmid, muxLock, full, empty;
-    key_id = ftok("keyfile", 65);
-    up_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
-
-    key_id = ftok("keyfile", 66);
-    producerQIndex = shmget(key_id, sizeof(int), 0666 | IPC_CREAT);
+    // create the needed IPCs
+    key_t key_id = ftok("keyfile", 66);
+    int producerIndex = shmget(key_id, sizeof(int), 0666 | IPC_CREAT);
 
     key_id = ftok("keyfile", 67);
-    consumerQIndex = shmget(key_id, sizeof(int), 0666 | IPC_CREAT);
+    int consumerIndex = shmget(key_id, sizeof(int), 0666 | IPC_CREAT);
 
     key_id = ftok("keyfile", 68);
-    shmid = shmget(key_id, BUFFER_SIZE * sizeof(int), 0666 | IPC_CREAT);
+    int shmid = shmget(key_id, BUFFER_SIZE * sizeof(int), 0666 | IPC_CREAT);
 
     key_id = ftok("keyfile", 69);
-    muxLock = semget(key_id, 1, 0666 | IPC_CREAT);
+    int muxLock = semget(key_id, 1, 0666 | IPC_CREAT);
 
     key_id = ftok("keyfile", 70);
-    full = semget(key_id, 1, 0666 | IPC_CREAT);
+    int full = semget(key_id, 1, 0666 | IPC_CREAT);
 
     key_id = ftok("keyfile", 71);
-    empty = semget(key_id, 1, 0666 | IPC_CREAT);
+    int empty = semget(key_id, 1, 0666 | IPC_CREAT);
 
     // check for any creation error
-    validate(CREATION, up_msgq_id | shmid | muxLock | full | empty);
+    validate(CREATION, producerIndex | consumerIndex | shmid | muxLock | full | empty);
 
-    int buffer_pointer;
+    // values to be produced by the producer in the buffer
     int i = 1;
+
     while (1)
     {
-        /* Insert into buffer */
+        down(empty);
         down(muxLock);
-
-        if (isFull(producerQIndex, consumerQIndex))
-        {
-
-            struct msgbuff message;
-            rec_val = msgrcv(up_msgq_id, &message, sizeof(message.mtext), 0, !IPC_NOWAIT);
-            validate(MSG_RECEIVE, rec_val);
-            produce(consumerQIndex, producerQIndex, shmid, i);
-        }
-        else if (isEmpty(consumerQIndex))
-        {
-            produce(consumerQIndex, producerQIndex, shmid, i);
-            struct msgbuff message;
-            send_val = msgsnd(up_msgq_id, &message, sizeof(message.mtext), !IPC_NOWAIT);
-            validate(MSG_SEND, send_val);
-        }
-        else
-        {
-            produce(consumerQIndex, producerQIndex, shmid, i);
-        }
-
+        produce(producerIndex, consumerIndex, shmid, i);
+        displaySharedBuffer(shmid);
         up(muxLock);
+        up(full);
+        usleep(1000000);
         i++;
-        showMem(shmid);
     }
     return 0;
 }
 
-void produce(int consumerQIndex, int producerQIndex, int shmid, int i)
+/**
+ * function to produce an item and place it in the buffer
+ * @param producerIndex the id of the shared memory containing the Rear pointer of the circular queue (Producer Index)
+ * @param consumerIndex the id of the shared memory containing the Front pointer of the circular queue (Consumer Index)
+ * @param shmid the id of the shared memory containing the buffer
+ * @param val value to be inserted in the buffer 
+ */
+void produce(int producerIndex, int consumerIndex, int shmid, int val)
 {
-    int front = readIndex(consumerQIndex);
-    int rear = readIndex(producerQIndex);
+     // A) get front and rear pointers
+    int front = readSharedMemory(consumerIndex, 0, false);
+    int rear = readSharedMemory(producerIndex, 0, false);
+
+    // B) modify the pointers for the buffer (circular queue) accordingly
     if (front == -1)
     {
         front = 0;
+        writeSharedMemory(consumerIndex, 0, front);
     }
     rear = (rear + 1) % BUFFER_SIZE;
-    writeIndex(producerQIndex, rear);
-    writer(shmid, i, rear);
-}
+    writeSharedMemory(producerIndex, 0, rear);
 
-bool isFull(int shmidP, int shmidC)
-{
 
-    void *shmaddr = shmat(shmidP, (void *)0, 0);
-    int front = *(int *)shmaddr;
-    shmdt(shmaddr);
-
-    shmaddr = shmat(shmidC, (void *)0, 0);
-    int rear = *(int *)shmaddr;
-    shmdt(shmaddr);
-
-    if (front == 0 && rear == BUFFER_SIZE - 1)
-    {
-        return true;
-    }
-    if (front == rear + 1)
-    {
-        return true;
-    }
-    return false;
-}
-
-bool isEmpty(int shmid)
-{
-    void *shmaddr = shmat(shmid, (void *)0, 0);
-    int front = *(int *)shmaddr;
-    shmdt(shmaddr);
-    if (front == -1)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void writer(int shmid, int intMsg, int index)
-{
-    void *shmaddr = shmat(shmid, (void *)0, 0);
-    validate(SHM_ATTCH, shmaddr == (char *)-1 ? -1 : 0);
-    printf("Produced : %i at index %i\n", intMsg, index);
-    *((int *)shmaddr + index * sizeof(int)) = intMsg;
-    shmdt(shmaddr);
-}
-void showMem(int shmid)
-{
-    void *shmaddr = shmat(shmid, (void *)0, 0);
-    for (int i = 0; i < BUFFER_SIZE; i++)
-        printf(" %i", *((int *)shmaddr + i * sizeof(int)));
-    printf("\n");
-    shmdt(shmaddr);
-}
-
-int readIndex(int shmid)
-{
-    void *shmaddr = shmat(shmid, (void *)0, 0);
-    validate(SHM_ATTCH, shmaddr == (char *)-1 ? -1 : 0);
-    int index = *(int *)shmaddr;
-    shmdt(shmaddr);
-    return index;
-}
-
-void writeIndex(int shmid, int val)
-{
-    void *shmaddr = shmat(shmid, (void *)0, 0);
-    validate(SHM_ATTCH, shmaddr == (char *)-1 ? -1 : 0);
-    *(int *)shmaddr = val;
-    shmdt(shmaddr);
-}
-
-void down(int sem)
-{
-    struct sembuf p_op;
-
-    p_op.sem_num = 0;
-    p_op.sem_op = -1;
-    p_op.sem_flg = !IPC_NOWAIT;
-    validate(SEM_DOWN, semop(sem, &p_op, 1));
-}
-
-void up(int sem)
-{
-    struct sembuf v_op;
-
-    v_op.sem_num = 0;
-    v_op.sem_op = 1;
-    v_op.sem_flg = !IPC_NOWAIT;
-    validate(SEM_UP, semop(sem, &v_op, 1));
-}
-
-void validate(int errorNumber, int checkVar)
-{
-    if (checkVar != -1)
-        return;
-
-    switch (errorNumber)
-    {
-    case CREATION:
-        perror("error in creation.\n");
-        break;
-    case EMPTY_SEM_INIT:
-        perror("error in initializing empty semaphore.\n");
-        break;
-    case EMPTY_SEM_GET_VAL:
-        perror("error in getting empty semaphore value.\n");
-        break;
-    case FULL_SEM_INIT:
-        perror("error in initializing full semaphore.\n");
-        break;
-    case FULL_SEM_GET_VAL:
-        perror("error in getting full semaphore value.\n");
-        break;
-    case MSG_RECEIVE:
-        perror("error in receiving messege.\n");
-        break;
-    case MSG_SEND:
-        perror("error in sending messege.\n");
-        break;
-    case SHM_ATTCH:
-        perror("error in attaching shared memeory.\n");
-        break;
-    case SEM_DOWN:
-        perror("error in downing the semaphore value.\n");
-        break;
-    case SEM_UP:
-        perror("error in uping the semaphore value.\n");
-        break;
-    case FULL_SEM_SET_VAL:
-        perror("error in setting the full value.\n");
-        break;
-    case EMPTY_SEM_SET_VAL:
-        perror("error in setting the empty value.\n");
-        break;
-    case MUTEX_SEM_SET_VAL:
-        perror("error in setting the mutex value.\n");
-        break;
-    default:
-        perror("unhandled error occured.\n");
-        break;
-    }
-    exit(-1);
+    // C) write the produced value to the shared memory and display it
+    writeSharedMemory(shmid, rear, val);
+    printf("Producer(%d) produced: %i at index %i\n", getpid(), val, rear);
 }
