@@ -2,6 +2,7 @@
 #include "hashmap.h"
 #include "priorityQueue.h"
 #include "queue.h"
+#include <math.h>
 
 int proc_msgqup_id, proc_msgqdown_id;
 minHeap readyQueueHPF;
@@ -23,16 +24,25 @@ uint64_t process_hash(const void *item, uint64_t seed0, uint64_t seed1);
 /*functions used for the hash table*/
 int stats_compare(const void *a, const void *b, void *udata);
 bool stats_iter(const void *item, void *udata);
+bool stats_iter_calc_sum(const void *item, void *udata);
+bool stats_iter_calc_stdDev(const void *item, void *udata);
+
 uint64_t stats_hash(const void *item, uint64_t seed0, uint64_t seed1);
 
-void printStatsLog(int id, struct hashmap *statsTable, int state);
+void printStatsLog(int id, struct hashmap *statsTable, int state, int current_time);
+void printOverallStats(struct hashmap *statsTable);
 
-FILE *scheduler_log;
+
+FILE *scheduler_log, *scheduler_perf;
+int sum_running=0, sum_waiting=0, n=0;
+float sum_WTA=0, sum_diff_avg;
 
 int main(int argc, char *argv[])
 {   
     scheduler_log = fopen("scheduler.log", "w");
-    
+    scheduler_perf = fopen("scheduler.perf", "w");
+    fprintf(scheduler_log, "#At\tTime\tX\tProcess\tY\tState\tArrived\tW\tTotal\tZ\tRemain\tY\tWait\tK\n");
+
     signal(SIGINT, cleanup);
     int algorithm, quantaMax, remaingingQuanta;
     bool generator_is_done = false;
@@ -111,6 +121,7 @@ int main(int argc, char *argv[])
         executeAlgorithm(algorithm, quantaMax, &remaingingQuanta, &runningProcessId, processTable, statsTable);
     }
 
+    printOverallStats(statsTable);
     // destroyClk(false);
     cleanup(0);
 }
@@ -147,9 +158,27 @@ int stats_compare(const void *a, const void *b, void *udata){
 // function used to iterate over all the hashtable contents and print them
 bool stats_iter(const void *item, void *udata){
     const struct processStats *process = item;
-    printf("process stats: (id=%d) (arrivalTime=%d) (runTime=%d) (remainingTime=%d) (finishTime=%d) (startTime=%d) (waitingTime=%d) (TA=%d) (WTA=%d)\n", process->id, process->arrivalTime, process->runTime, process->remainingTime, process->finishTime, process->startTime, process->waitingTime, process->TA, process->WTA);
+    printf("process stats: (id=%d) (arrivalTime=%d) (runTime=%d) (remainingTime=%d) (finishTime=%d) (startTime=%d) (waitingTime=%d) (TA=%d) (WTA=%.2f)\n", process->id, process->arrivalTime, process->runTime, process->remainingTime, process->finishTime, process->startTime, process->waitingTime, process->TA, process->WTA);
     return true;
 }
+
+bool stats_iter_calc_sum(const void *item, void *udata){
+    const struct processStats *process = item;
+    sum_running += process->runTime;
+    sum_WTA += process->WTA;
+    sum_waiting += process->waitingTime;
+    return true;
+}
+
+bool stats_iter_calc_stdDev(const void *item, void *udata){
+    const struct processStats *process = item;
+    float avg_WTA = sum_WTA/(float)n;
+    float WTA = process->WTA;
+    sum_diff_avg += ((WTA-avg_WTA)*(WTA-avg_WTA));
+    return true;
+}
+
+
 // returns the hash of the key of the table
 uint64_t stats_hash(const void *item, uint64_t seed0, uint64_t seed1){
     return hashmap_murmur(item, sizeof(int), seed0, seed1);
@@ -249,7 +278,7 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 processPtr_stats->startTime = getClk();
 
                 ///////////////////////////////////////////////////////////////print started//////////////////
-                // printStatsLog(runningProcessId, statsTable, 0);
+                printStatsLog(*runningProcessId, statsTable, 0, getClk());
 
                 processPtr = hashmap_set(processTable, processPtr);
                 processPtr_stats = hashmap_set(statsTable, processPtr_stats);
@@ -289,13 +318,25 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 *runningProcessId = peek(&readyQueueSRTN)->data;
                 struct processInfo process = {.id = *runningProcessId};
                 struct processInfo *processPtr = hashmap_get(processTable, &process);
+                struct processStats process_stats = {.id = *runningProcessId};
+                struct processStats *processPtr_stats = hashmap_get(statsTable, &process_stats);
+
                 pop(&readyQueueSRTN);
                 processPtr->isRunning = true;
                 // we have two cases
                 // case 1 : the next process hasn't started before (we need to set its starting time)
                 // case 2 : the next process has started before but was prempted by another arriving process
-                if (processPtr->runTime == processPtr->remainingTime)
+                if (processPtr->runTime == processPtr->remainingTime){
                     processPtr->startTime = getClk();
+                    processPtr_stats->startTime = getClk();
+                    //Started
+                    printStatsLog(*runningProcessId, statsTable, 0, getClk());
+                }else{
+                    //Resumed
+                    printStatsLog(*runningProcessId, statsTable, 1, getClk());
+                }
+                processPtr = hashmap_set(processTable, processPtr);
+                processPtr_stats = hashmap_set(statsTable, processPtr_stats);
                 // send messege to the process with its remaining time
                 processMsg.mtype = processPtr->pid;
                 processMsg.remainingTime = processPtr->remainingTime;
@@ -311,6 +352,9 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 // get the remaining time of the currently running process
                 struct processInfo process = {.id = *runningProcessId};
                 struct processInfo *runningProcessPtr = hashmap_get(processTable, &process);
+                struct processStats process_stats = {.id = *runningProcessId};
+                struct processStats *processPtr_stats = hashmap_get(statsTable, &process_stats);
+
                 int runningProcessRemainingTime = runningProcessPtr->remainingTime;
                 if (!isEmpty(&readyQueueSRTN))
                 {
@@ -334,13 +378,24 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                         // pre-empt the currently running process
                         runningProcessPtr->isRunning = 0;
                         push(&readyQueueSRTN, runningProcessPtr->remainingTime, runningProcessPtr->id);
+                        
+                        //Stopped
+                        printStatsLog(*runningProcessId, statsTable, 2, getClk());
                         // set the process with the least remaining time as the running process
                         *runningProcessId = minProcessId;
                         process.id = *runningProcessId;
+                        process_stats.id = *runningProcessId;
                         runningProcessPtr = (struct processInfo *)hashmap_get(processTable, &process);
+                        processPtr_stats = (struct processStats *)hashmap_get(statsTable, &process_stats);
                         runningProcessPtr->isRunning = 1;
                         // set the process new process starting time and send a message with remaining time
                         runningProcessPtr->startTime = getClk();
+                        processPtr_stats->startTime = getClk();
+
+                        //Started
+                        printStatsLog(*runningProcessId, statsTable, 0, getClk());
+                        runningProcessPtr = hashmap_set(processTable, runningProcessPtr);
+                        processPtr_stats = hashmap_set(statsTable, processPtr_stats);
                     }
                 }
                 // send messege to the process with its remaining time
@@ -365,6 +420,9 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 *runningProcessId = front(&readyQueueRR);
                 struct processInfo process = {.id = *runningProcessId};
                 struct processInfo *processPtr = hashmap_get(processTable, &process);
+                struct processStats process_stats = {.id = *runningProcessId};
+                struct processStats *processPtr_stats = hashmap_get(statsTable, &process_stats);
+
                 popQueue(&readyQueueRR);
                 processPtr->isRunning = true;
                 // intailize quanta of new process
@@ -373,8 +431,17 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 // case 1 : the next process hasn't started before (we need to set its starting time)
                 // case 2 : the next process has started before but was prempted by another arriving process
                 // set the process new process starting time and send a message with remaining time
-                if (processPtr->startTime == -1)
+                if (processPtr->startTime == -1){
                     processPtr->startTime = getClk();
+                    processPtr_stats->startTime = getClk();
+                    //Started
+                    printStatsLog(*runningProcessId, statsTable, 0, getClk());
+                }else{
+                    //Resumed
+                    printStatsLog(*runningProcessId, statsTable, 1, getClk());
+                }
+                processPtr = hashmap_set(processTable, processPtr);
+                processPtr_stats = hashmap_set(statsTable, processPtr_stats);
 
                 // send messege to the process with its remaining time
                 processMsg.mtype = processPtr->pid;
@@ -392,8 +459,13 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 struct processInfo process = {.id = *runningProcessId};
                 struct processInfo *runningProcessPtr = hashmap_get(processTable, &process);
 
+                struct processStats process_stats = {.id = *runningProcessId};
+                struct processStats *processPtr_stats = hashmap_get(statsTable, &process_stats);
+
                 if (*remaingingQuanta == 0)
-                {
+                {   
+                    //Stopped
+                    printStatsLog(*runningProcessId, statsTable, 2, getClk());
                     if (!isEmptyQueue(&readyQueueRR))
                     {
                         // get the id of next process to run
@@ -406,19 +478,31 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                         // set next process  as the running process
                         *runningProcessId = currentProcessId;
                         process.id = *runningProcessId;
+                        process_stats.id = *runningProcessId;
                         runningProcessPtr = (struct processInfo *)hashmap_get(processTable, &process);
+                        processPtr_stats = (struct processStats *)hashmap_get(statsTable, &process_stats);
                         runningProcessPtr->isRunning = 1;
                         // set the process new process starting time and send a message with remaining time
-                        if (runningProcessPtr->startTime == -1)
+                        if (runningProcessPtr->startTime == -1){
+                            //Started
                             runningProcessPtr->startTime = getClk();
+                            processPtr_stats->startTime = getClk();
+                            printStatsLog(*runningProcessId, statsTable, 0, getClk());
+                        }else{
+                            //Resumed
+                            printStatsLog(*runningProcessId, statsTable, 1, getClk());
+                        }
 
                         // intailize quanta of new process
                         *remaingingQuanta = quantaMax - 1;
+
+                        runningProcessPtr = hashmap_set(processTable, runningProcessPtr);
+                        processPtr_stats = hashmap_set(statsTable, processPtr_stats);
                     }
                 }
-                else
+                else{
                     *remaingingQuanta = *remaingingQuanta - 1;
-
+                }
                 // printf("quanta : %d   : running %d \n", *remaingingQuanta, *runningProcessId);
                 // printf("------------------------------\n");
 
@@ -473,16 +557,20 @@ void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *pr
         processPtr->finishTime = getClk() + 1;
         processPtr_stats->finishTime = getClk() + 1;
 
-        // printStatsLog(runningProcessId, statsTable, 3);
-
+        //finished
+        printStatsLog(processPtr_stats->id, statsTable, 3, getClk()+1);
+        
+        //free the PCB of finished process 
+        hashmap_delete(processTable, &process);
+    }else{
+        hashmap_set(processTable, processPtr);
     }
 
-    hashmap_set(processTable, processPtr);
     hashmap_set(statsTable, processPtr_stats);
     
 }
 
-void printStatsLog(int id, struct hashmap *statsTable, int state){
+void printStatsLog(int id, struct hashmap *statsTable, int state, int current_time){
     char *state_str;
     if(state==0)
         state_str = "started";
@@ -492,13 +580,57 @@ void printStatsLog(int id, struct hashmap *statsTable, int state){
         state_str = "stopped";
     else
         state_str = "finished";
+    
+    struct processStats process_stats = {.id = id};
+    struct processStats *processPtr_stats = hashmap_get(statsTable, &process_stats);
 
-    //fprintf(scheduler_log, "")          
+    int y = id;                                 //id
+    int w = processPtr_stats->arrivalTime;      //arrival time
+    int z = processPtr_stats->runTime;          //tun time
+    int r = processPtr_stats->remainingTime;    //remain time
+    int k = current_time - w - z + r;           //wait time
+
+    processPtr_stats->waitingTime = k; 
+    processPtr_stats->remainingTime = r;
+
+
+    if(state == 3){
+        int TA = current_time - w;                     
+        float WTA = (float)TA/(float)z;
+        processPtr_stats->TA = TA;
+        processPtr_stats->WTA = WTA;
+        fprintf(scheduler_log, " At\tTime\t%d\tProcess\t%d\t%s\tArrived\t%d\tTotal\t%d\tRemain\t%d\tWait\t%d\tTA\t%d\tWTA\t%.2f\n", current_time, y, state_str, w, z, r, k, TA, WTA);        
+    }
+    else    
+        fprintf(scheduler_log, " At\tTime\t%d\tProcess\t%d\t%s\tArrived\t%d\tTotal\t%d\tRemain\t%d\tWait\t%d\n", current_time, y, state_str, w, z, r, k);
+   
+    hashmap_set(statsTable, processPtr_stats);
 }
+
+void printOverallStats(struct hashmap *statsTable){
+    int finalTime = getClk()-1;
+    //fprintf(scheduler_perf, "final time = %d \n", finalTime);
+    hashmap_scan(statsTable, stats_iter_calc_sum, NULL);
+    //fprintf(scheduler_perf, "sum run time = %d \n", sum_running);
+    //fprintf(scheduler_perf, "sum WTA time = %.2f \n", sum_WTA);
+    //fprintf(scheduler_perf, "sum waiting time = %d \n", sum_waiting);
+    n = hashmap_count(statsTable);
+    //fprintf(scheduler_perf, "n = %d \n\n", n);
+    float cpu_utilization = ((float)sum_running/(float)finalTime)*100;
+    fprintf(scheduler_perf, "CPU utilization = %.2f%% \n", cpu_utilization);
+    fprintf(scheduler_perf, "Avg WTA = %.2f \n", (float)sum_WTA/(float)n);
+    fprintf(scheduler_perf, "Avg Waiting = %.2f \n", (float)sum_waiting/(float)n);
+    hashmap_scan(statsTable, stats_iter_calc_stdDev, NULL);
+    //fprintf(scheduler_perf, "Sum Square Avg Diff = %.2f \n", sum_diff_avg);
+    float STD_WTA = sqrt(sum_diff_avg/(float)n);
+    fprintf(scheduler_perf, "Std WTA = %.2f \n", STD_WTA); 
+}
+
 
 void cleanup(int signum)
 {
     fclose(scheduler_log);
+    fclose(scheduler_perf);
     msgctl(proc_msgqup_id, IPC_RMID, (struct msqid_ds *)0);
     msgctl(proc_msgqdown_id, IPC_RMID, (struct msqid_ds *)0);
     destroyClk(false);
