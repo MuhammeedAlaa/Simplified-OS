@@ -30,11 +30,14 @@ uint64_t stats_hash(const void *item, uint64_t seed0, uint64_t seed1);
 void printStatsLog(int id, struct hashmap *statsTable, int state);
 
 FILE *scheduler_log;
+FILE *memory_log;
 
 int main(int argc, char *argv[])
-{   
+{ // open files for writing output
     scheduler_log = fopen("scheduler.log", "w");
-    
+    memory_log = fopen("memory.log", "w");
+    fprintf(memory_log, "#At time x allocated y bytes for process z from i to j\n");
+
     signal(SIGINT, cleanup);
     int remaingingQuanta;
     bool generator_is_done = false;
@@ -90,8 +93,8 @@ int main(int argc, char *argv[])
     //TODO: Add if Empty Queue is not empty
     while (!generator_is_done || !isEmpty(&readyQueueHPF) || !isEmpty(&readyQueueSRTN) || !isEmptyQueue(&readyQueueRR) || runningProcessId != -1 || !isEmptyQueue(&waitingQueue))
     {
-        printf("```````````````````````````````````````````\n");
-        hashmap_scan(processTable, process_iter, NULL);
+        printf("============================START OF TIME STEP ================================\n");
+        printf("CURRENT TIME STEP : %d\n", getClk() + 1);
         if (runningProcessId != -1)
         {
             updateRunningProcessRemainingTime(&runningProcessId, processTable, statsTable);
@@ -106,13 +109,18 @@ int main(int argc, char *argv[])
             generator_is_done = msg.finished;
             if (msg.numberOfProcesses)
             {
+                printf("Attempting to Allocate the process %d in memory ... \n", msg.p_info.id);
                 createProcess(msg.p_info, algorithm, quantaMax, processTable, statsTable);
             }
         } while (msg.numberOfProcesses - 1 > 0);
 
-        printf("at time step: %d we have: \n", getClk());
         // hashmap_scan(statsTable, stats_iter, NULL);
+        printf("-------------------------- Process Table ----------------------------------\n");
+        hashmap_scan(processTable, process_iter, NULL);
+        printf("---------------------------------------------------------------------------\n");
         executeAlgorithm(algorithm, quantaMax, &remaingingQuanta, &runningProcessId, processTable, statsTable);
+        printf("============================ END OF TIME STEP ==========================\n");
+        printf("\n");
     }
 
     // destroyClk(false);
@@ -142,23 +150,25 @@ uint64_t process_hash(const void *item, uint64_t seed0, uint64_t seed1)
 }
 
 // function used in the hashmap to compare two processes stats for equality
-int stats_compare(const void *a, const void *b, void *udata){
+int stats_compare(const void *a, const void *b, void *udata)
+{
     const struct processStats *process_a = a;
     const struct processStats *process_b = b;
     return (process_a->id == process_b->id ? 0 : 1);
 }
 
 // function used to iterate over all the hashtable contents and print them
-bool stats_iter(const void *item, void *udata){
+bool stats_iter(const void *item, void *udata)
+{
     const struct processStats *process = item;
     printf("process stats: (id=%d) (arrivalTime=%d) (runTime=%d) (remainingTime=%d) (finishTime=%d) (startTime=%d) (waitingTime=%d) (TA=%d) (WTA=%d)\n", process->id, process->arrivalTime, process->runTime, process->remainingTime, process->finishTime, process->startTime, process->waitingTime, process->TA, process->WTA);
     return true;
 }
 // returns the hash of the key of the table
-uint64_t stats_hash(const void *item, uint64_t seed0, uint64_t seed1){
+uint64_t stats_hash(const void *item, uint64_t seed0, uint64_t seed1)
+{
     return hashmap_murmur(item, sizeof(int), seed0, seed1);
 }
-
 
 /**
  * function to create a new process after receiving it from the process generator
@@ -182,8 +192,8 @@ int createProcess(struct processInfo process, int algorithm, int quantaMax, stru
         .startTime = -1,
         .blockStart = -1,
         .actualSize = -1,
-        .isRunning = false };
-    
+        .isRunning = false};
+
     struct processStats newStats = {
         .id = process.id,
         .arrivalTime = process.arrivalTime,
@@ -193,15 +203,18 @@ int createProcess(struct processInfo process, int algorithm, int quantaMax, stru
         .startTime = -1,
         .waitingTime = 0,
         .TA = -1,
-        .WTA = -1 };
+        .WTA = -1};
 
     int actualSize = -1;
     int blockStart = allocateMem(newProcess.memsize, &actualSize);
     // if it couldnot allocate -> then insert in waiting queue
-    if(blockStart == -1) {
+    if (blockStart == -1)
+    {
         pushQueue(&waitingQueue, newProcess.id);
+        printf("No sufficient memory for process %d, Added to the waiting queue \n", newProcess.id);
     }
-    else {
+    else
+    {
         int pid = fork();
         if (pid == -1)
             perror("error in forking new process");
@@ -227,6 +240,7 @@ int createProcess(struct processInfo process, int algorithm, int quantaMax, stru
         }
         newProcess.blockStart = blockStart;
         newProcess.actualSize = actualSize;
+        fprintf(memory_log, "At time %d allocated %d bytes for process %d from %d to %d \n", newProcess.arrivalTime, newProcess.memsize, newProcess.id, newProcess.blockStart, newProcess.blockStart + actualSize - 1);
     }
     // insert the process in the process table
     hashmap_set(processTable, &newProcess);
@@ -323,7 +337,7 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 {
                     perror("Error in sending from schedular to process\n");
                 }
-                printf("schedular message sent to the process %d with its remaining time\n", processPtr->pid);
+                // printf("schedular message sent to the process %d with its remaining time\n", processPtr->pid);
             }
             else
             {
@@ -370,7 +384,7 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 {
                     perror("Error in sending from schedular to process\n");
                 }
-                printf("schedular message sent to the process %d with its remaining time\n", runningProcessPtr->pid);
+                // printf("schedular message sent to the process %d with its remaining time\n", runningProcessPtr->pid);
             }
         }
         break;
@@ -403,7 +417,7 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 {
                     perror("Error in sending from schedular to process\n");
                 }
-                printf("schedular message sent to the process %d with its remaining time\n", processPtr->pid);
+                // printf("schedular message sent to the process %d with its remaining time\n", processPtr->pid);
             }
             else
             {
@@ -449,7 +463,7 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                 {
                     perror("Error in sending from schedular to process\n");
                 }
-                printf("schedular message sent to the process %d with its remaining time\n", runningProcessPtr->pid);
+                // printf("schedular message sent to the process %d with its remaining time\n", runningProcessPtr->pid);
             }
         }
         break;
@@ -469,7 +483,7 @@ void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *pr
     // get the process control block
     struct processInfo process = {.id = *runningProcessId};
     struct processInfo *processPtr = hashmap_get(processTable, &process);
-    
+
     struct processStats process_stats = {.id = *runningProcessId};
     struct processStats *processPtr_stats = hashmap_get(statsTable, &process_stats);
     // receive the remaining time from the running process
@@ -494,42 +508,44 @@ void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *pr
 
         // printStatsLog(runningProcessId, statsTable, 3);
         deallocateMem(processPtr->blockStart, processPtr->actualSize);
+        fprintf(memory_log, "At time %d freed %d from process %d from %d to %d\n", processPtr->finishTime, processPtr->memsize, processPtr->id, processPtr->blockStart, processPtr->blockStart + processPtr->actualSize - 1);
         // after deallocating check if a process from the waiting queue can be allocated
         int blockStart, id;
-        while (!isEmptyQueue(&waitingQueue)) {
+        while (!isEmptyQueue(&waitingQueue))
+        {
             id = front(&waitingQueue);
             popQueue(&waitingQueue);
             struct processInfo pr = {.id = id};
             struct processInfo *p = hashmap_get(processTable, &pr);
             blockStart = createProcess(*p, algorithm, quantaMax, processTable, statsTable);
-            if(blockStart == -1) 
+            if (blockStart == -1)
                 break;
         }
-
     }
 
     hashmap_set(processTable, processPtr);
     hashmap_set(statsTable, processPtr_stats);
-    
 }
 
-void printStatsLog(int id, struct hashmap *statsTable, int state){
+void printStatsLog(int id, struct hashmap *statsTable, int state)
+{
     char *state_str;
-    if(state==0)
+    if (state == 0)
         state_str = "started";
-    else if(state==1)
+    else if (state == 1)
         state_str = "resumed";
-    else if(state==2)
+    else if (state == 2)
         state_str = "stopped";
     else
         state_str = "finished";
 
-    //fprintf(scheduler_log, "")          
+    //fprintf(scheduler_log, "")
 }
 
 void cleanup(int signum)
 {
     fclose(scheduler_log);
+    fclose(memory_log);
     msgctl(proc_msgqup_id, IPC_RMID, (struct msqid_ds *)0);
     msgctl(proc_msgqdown_id, IPC_RMID, (struct msqid_ds *)0);
     destroyClk(false);
@@ -538,4 +554,3 @@ void cleanup(int signum)
     kill(getppid(), SIGUSR1);
     exit(0);
 }
-

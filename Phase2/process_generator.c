@@ -129,8 +129,8 @@ int main(int argc, char *argv[])
 
     // 4. initialize clock
     initClk();
-    int x = getClk();
-    printf("current time is %d\n", x);
+    // int x = getClk();
+    // printf("current time is %d\n", x);
     // 5. Send the information to the scheduler at the appropriate time.
     /* 
         Initialize the IPC Resources needed:
