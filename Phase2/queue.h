@@ -21,5 +21,6 @@ int front(queue *q);
 int rear(queue *q);
 void pushQueue(queue *Q, int data);
 int isEmptyQueue(queue *q);
+void visualizeQueue(queue *q);
 
 #endif

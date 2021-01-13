@@ -60,3 +60,21 @@ int isEmptyQueue(queue *q)
 {
     return q->size == 0;
 }
+
+void visualizeQueue(queue *q)
+{
+    printf("[Front]-->");
+    qNode *curr = q->front;
+    int cnt = q->size;
+    while (cnt > 1)
+    {
+        printf("(%d)-->", curr->data);
+        cnt--;
+        curr = curr->next;
+    }
+    if (curr != NULL)
+    {
+        printf("(%d)", curr->data);
+    }
+    printf("<--[rear] \n");
+}

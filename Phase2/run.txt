@@ -1,0 +1,452 @@
+./process_generator.out
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 1
+Attempting to Allocate the process 1 in memory ... 
+------------------------------ Buddy Allocation info ----------------------------------
+powerIndex : 8
+cntTrials : 2 
+allocatedSize : 256 
+memory allocated from i : 0 to j : 255 
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  || (256) - 
+size: [ 512]  || (512) - 
+size: [1024]  ||
+--------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=1) (remainingTime=6) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 2
+schedular received remaining time 5 from running process: 18546
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=1) (remainingTime=5) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 3
+schedular received remaining time 4 from running process: 18546
+Attempting to Allocate the process 2 in memory ... 
+------------------------------ Buddy Allocation info ----------------------------------
+powerIndex : 8
+cntTrials : 0 
+allocatedSize : 256 
+memory allocated from i : 256 to j : 511 
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  ||
+size: [ 512]  || (512) - 
+size: [1024]  ||
+--------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+Attempting to Allocate the process 3 in memory ... 
+------------------------------ Buddy Allocation info ----------------------------------
+powerIndex : 9
+cntTrials : 0 
+allocatedSize : 512 
+memory allocated from i : 512 to j : 1023 
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  ||
+size: [ 512]  ||
+size: [1024]  ||
+--------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+Attempting to Allocate the process 4 in memory ... 
+------------------------------ Buddy Allocation info ----------------------------------
+powerIndex : 9
+cntTrials : 2 
+No sufficient memory for process 4, Added to the waiting queue 
+Attempting to Allocate the process 5 in memory ... 
+------------------------------ Buddy Allocation info ----------------------------------
+powerIndex : 9
+cntTrials : 2 
+No sufficient memory for process 5, Added to the waiting queue 
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=4) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=1) (remainingTime=3) (finishTime=-1) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=0) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(4)-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 4
+schedular received remaining time 2 from running process: 18550
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=4) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=1) (remainingTime=2) (finishTime=-1) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=0) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(4)-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 5
+schedular received remaining time 1 from running process: 18550
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=4) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=1) (remainingTime=1) (finishTime=-1) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=0) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualprocess pid = 18550 
+process 18550 terminated successfully
+Size=-1) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(4)-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 6
+schedular received remaining time 0 from running process: 18550
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  || (256) - 
+size: [ 512]  ||
+size: [1024]  ||
+--------------------------------------------------------------------
+------------------------------ Buddy Allocation info ----------------------------------
+powerIndex : 9
+cntTrials : 2 
+No sufficient memory for process 4, Added to the waiting queue 
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=4) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=1) (remainingTime=3) (finishTime=-1) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=0) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(4)-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 7
+schedular received remaining time 2 from running process: 18551
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=4) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=1) (remainingTime=2) (finishTime=-1) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=0) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(4)-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 8
+schedular received remaining time 1 from running process: 18551
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=4) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=1) (remainingTime=1) (finishTime=-1) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256)process pid = 18551 
+process 18551 terminated successfully
+ (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=0) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(4)-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 9
+schedular received remaining time 0 from running process: 18551
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  || (256) - 
+size: [ 512]  || (512) - 
+size: [1024]  ||
+--------------------------------------------------------------------
+------------------------------ Buddy Allocation info ----------------------------------
+powerIndex : 9
+cntTrials : 0 
+allocatedSize : 512 
+memory allocated from i : 512 to j : 1023 
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  || (256) - 
+size: [ 512]  ||
+size: [1024]  ||
+--------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+------------------------------ Buddy Allocation info ----------------------------------
+powerIndex : 9
+cntTrials : 2 
+No sufficient memory for process 5, Added to the waiting queue 
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=1) (remainingTime=4) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 10
+schedular received remaining time 3 from running process: 18546
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=1) (remainingTime=3) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 11
+schedular received remaining time 2 from running process: 18546
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=1) (remainingTime=2) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 12
+schedular received remaining time 1 from running process: 18546
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=1) (remainingTime=1) (finishTime=-1) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=0) (state=0) (remainingTime=3) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=-1) (actualSize=-1) 
+process: (id=2) (arrivprocess pid = 18546 
+process 18546 terminated successfully
+alTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]-->(5)<--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 13
+schedular received remaining time 0 from running process: 18546
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  ||
+size: [ 512]  || (0) - 
+size: [1024]  ||
+--------------------------------------------------------------------
+------------------------------ Buddy Allocation info ----------------------------------
+powerIndex : 9
+cntTrials : 0 
+allocatedSize : 512 
+memory allocated from i : 0 to j : 511 
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  ||
+size: [ 512]  ||
+size: [1024]  ||
+--------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=0) (finishTime=13) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=18565) (state=1) (remainingTime=3) (finishTime=-1) (startTime=13) (memsize=257) (blockstart=0) (actualSize=512) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 14
+schedular received remaining time 2 from running process: 18565
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=0) (finishTime=13) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=18565) (state=1) (remainingTime=2) (finishTime=-1) (startTime=13) (memsize=257) (blockstart=0) (actualSize=512) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 15
+schedular received remaining time 1 from running process: 18565
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=0) (finishTime=13) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=18565) (state=1) (remainingTime=1) (finishTime=-1) (startTime=13) (memsize=257) (blockstart=0) (actualSiprocess pid = 18565 
+process 18565 terminated successfully
+ze=512) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=0) (remainingTime=4) (finishTime=-1) (startTime=-1) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 16
+schedular received remaining time 0 from running process: 18565
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  ||
+size: [ 512]  || (0) - 
+size: [1024]  ||
+--------------------------------------------------------------------
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=0) (finishTime=13) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=18565) (state=0) (remainingTime=0) (finishTime=16) (startTime=13) (memsize=257) (blockstart=0) (actualSize=512) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=1) (remainingTime=4) (finishTime=-1) (startTime=16) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 17
+schedular received remaining time 3 from running process: 18558
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=0) (finishTime=13) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=18565) (state=0) (remainingTime=0) (finishTime=16) (startTime=13) (memsize=257) (blockstart=0) (actualSize=512) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=1) (remainingTime=3) (finishTime=-1) (startTime=16) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 18
+schedular received remaining time 2 from running process: 18558
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=0) (finishTime=13) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=18565) (state=0) (remainingTime=0) (finishTime=16) (startTime=13) (memsize=257) (blockstart=0) (actualSize=512) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=1) (remainingTime=2) (finishTime=-1) (startTime=16) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 19
+schedular received remaining time 1 from running process: 18558
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=0) (finishTime=13) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=18565) (state=0) (remainingTime=0) (finishTime=16) (startTime=13) (memsize=257) (blockstart=0) (actualSize=512) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainprocess pid = 18558 
+process 18558 terminated successfully
+ingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=1) (remainingTime=1) (finishTime=-1) (startTime=16) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
+
+============================START OF TIME STEP ================================
+CURRENT TIME STEP : 20
+schedular received remaining time 0 from running process: 18558
+---------------------- Buddy System Table --------------------------
+size: [   8]  ||
+size: [  16]  ||
+size: [  32]  ||
+size: [  64]  ||
+size: [ 128]  ||
+size: [ 256]  ||
+size: [ 512]  ||
+size: [1024]  || (0) - 
+--------------------------------------------------------------------
+-------------------------- Process Table ----------------------------------
+process: (id=1) (arrivalTime=1) (runTime=6) (priority=5) (pid=18546) (state=0) (remainingTime=0) (finishTime=13) (startTime=1) (memsize=200) (blockstart=0) (actualSize=256) 
+process: (id=3) (arrivalTime=3) (runTime=3) (priority=1) (pid=18551) (state=0) (remainingTime=0) (finishTime=9) (startTime=6) (memsize=257) (blockstart=512) (actualSize=512) 
+process: (id=5) (arrivalTime=3) (runTime=3) (priority=1) (pid=18565) (state=0) (remainingTime=0) (finishTime=16) (startTime=13) (memsize=257) (blockstart=0) (actualSize=512) 
+process: (id=2) (arrivalTime=3) (runTime=3) (priority=3) (pid=18550) (state=0) (remainingTime=0) (finishTime=6) (startTime=3) (memsize=170) (blockstart=256) (actualSize=256) 
+process: (id=4) (arrivalTime=3) (runTime=4) (priority=1) (pid=18558) (state=0) (remainingTime=0) (finishTime=20) (startTime=16) (memsize=257) (blockstart=512) (actualSize=512) 
+---------------------------------------------------------------------------
+-------------------------- waiting Queue ----------------------------------
+[Front]--><--[rear] 
+---------------------------------------------------------------------------
+============================ END OF TIME STEP ==========================
