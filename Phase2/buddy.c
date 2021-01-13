@@ -11,11 +11,13 @@ void initializeBuddyMem() {
 }
 
 void printBuddyMem() {
+    printf("----------- Buddy System Table -------------------------\n");
     for(int i = minBlockPower; i <= maxBlockPower; i++) {
         printf("size:%d    |", (int)pow(2, i));
         Traverse(buddyFreeMem[i]);
         printf("\n");
     }
+    printf("--------------------------------------------------------\n");
 }
 
 int findNearstPowerIndex(int reqMemorySize) {
@@ -67,6 +69,7 @@ int allocateMem(int reqMemorySize, int* allocatedSize) {
         cntTrials--;
     }
     printf("memory allocated from i : %d to j : %d \n", startIndex, startIndex + *allocatedSize - 1);
+    printBuddyMem();
     return startIndex;
 }
 
@@ -113,6 +116,7 @@ void deallocateMem(int block_start, int actualSize) {
     if(i == maxBlockPower) {
         InsertOrdered(buddyFreeMem[maxBlockPower], 0);
     }
+    printBuddyMem();
 }
 
 void destroyBuddyMem() {

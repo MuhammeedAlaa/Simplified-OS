@@ -45,6 +45,8 @@ struct processInfo
     int finishTime;
     int startTime;
     int memsize;
+    int blockStart;
+    int actualSize; // actual size allocated in memory as a power of 2
 };
 
 struct processStats
