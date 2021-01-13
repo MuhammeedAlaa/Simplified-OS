@@ -10,7 +10,7 @@ minHeap readyQueueSRTN;
 queue readyQueueRR;
 queue waitingQueue; // for processes that cannot be allocated in memory
 
-int createProcess(struct processInfo process, int algorithm, int quantaMax, struct hashmap *processTable, struct hashmap *statsTable, bool pushInWaitingQueue);
+int createProcess(struct processInfo process, int algorithm, int quantaMax, struct hashmap *processTable, struct hashmap *statsTable, bool pushInWaitingQueue, int currTime);
 void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *runningProcessId, struct hashmap *processTable, struct hashmap *statsTable);
 void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *processTable, struct hashmap *statsTable);
 
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
             if (msg.numberOfProcesses)
             {
                 printf("Attempting to Allocate the process %d in memory ... \n", msg.p_info.id);
-                createProcess(msg.p_info, algorithm, quantaMax, processTable, statsTable, 1);
+                createProcess(msg.p_info, algorithm, quantaMax, processTable, statsTable, 1, getClk());
             }
         } while (msg.numberOfProcesses - 1 > 0);
 
@@ -181,7 +181,7 @@ uint64_t stats_hash(const void *item, uint64_t seed0, uint64_t seed1)
  * @param processTable the process table that contains the processes active now in the scheduler
  * 
  */
-int createProcess(struct processInfo process, int algorithm, int quantaMax, struct hashmap *processTable, struct hashmap *statsTable, bool pushInWaitingQueue)
+int createProcess(struct processInfo process, int algorithm, int quantaMax, struct hashmap *processTable, struct hashmap *statsTable, bool pushInWaitingQueue, int currTime)
 {
     // make a struct containing the process data received from the process generator
     struct processInfo newProcess = {
@@ -244,7 +244,7 @@ int createProcess(struct processInfo process, int algorithm, int quantaMax, stru
         }
         newProcess.blockStart = blockStart;
         newProcess.actualSize = actualSize;
-        fprintf(memory_log, "At time %d allocated %d bytes for process %d from %d to %d \n", newProcess.arrivalTime, newProcess.memsize, newProcess.id, newProcess.blockStart, newProcess.blockStart + actualSize - 1);
+        fprintf(memory_log, "At time %d allocated %d bytes for process %d from %d to %d \n", currTime, newProcess.memsize, newProcess.id, newProcess.blockStart, newProcess.blockStart + actualSize - 1);
     }
     // insert the process in the process table
     hashmap_set(processTable, &newProcess);
@@ -520,7 +520,7 @@ void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *pr
             id = front(&waitingQueue);
             struct processInfo pr = {.id = id};
             struct processInfo *p = hashmap_get(processTable, &pr);
-            blockStart = createProcess(*p, algorithm, quantaMax, processTable, statsTable, 0);
+            blockStart = createProcess(*p, algorithm, quantaMax, processTable, statsTable, 0, getClk() + 1);
             if (blockStart == -1)
                 break;
             popQueue(&waitingQueue);
