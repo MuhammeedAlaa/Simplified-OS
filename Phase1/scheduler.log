@@ -2,6 +2,10 @@
  At	Time	1	Process	1	started	Arrived	1	Total	6	Remain	6	Wait	0
  At	Time	3	Process	1	stopped	Arrived	1	Total	6	Remain	4	Wait	0
  At	Time	3	Process	2	started	Arrived	3	Total	3	Remain	3	Wait	0
- At	Time	6	Process	2	finished	Arrived	3	Total	3	Remain	0	Wait	0	TA	3	WTA	1.00
- At	Time	6	Process	1	resumed	Arrived	1	Total	6	Remain	4	Wait	3
+ At	Time	5	Process	2	stopped	Arrived	3	Total	3	Remain	1	Wait	0
+ At	Time	5	Process	1	resumed	Arrived	1	Total	6	Remain	4	Wait	2
+ At	Time	7	Process	1	stopped	Arrived	1	Total	6	Remain	2	Wait	2
+ At	Time	7	Process	2	resumed	Arrived	3	Total	3	Remain	1	Wait	2
+ At	Time	8	Process	2	finished	Arrived	3	Total	3	Remain	0	Wait	2	TA	5	WTA	1.67
+ At	Time	8	Process	1	resumed	Arrived	1	Total	6	Remain	2	Wait	3
  At	Time	10	Process	1	finished	Arrived	1	Total	6	Remain	0	Wait	3	TA	9	WTA	1.50

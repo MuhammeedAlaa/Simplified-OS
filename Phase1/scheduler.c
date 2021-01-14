@@ -381,6 +381,7 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                         
                         //Stopped
                         printStatsLog(*runningProcessId, statsTable, 2, getClk());
+                        
                         // set the process with the least remaining time as the running process
                         *runningProcessId = minProcessId;
                         process.id = *runningProcessId;
