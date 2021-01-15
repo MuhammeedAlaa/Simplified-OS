@@ -36,7 +36,6 @@ void popQueue(queue *q)
     q->front = q->front->next;
     if (q->front == NULL)
         q->rear = NULL;
-
     free(temp);
     q->size = q->size - 1;
 }

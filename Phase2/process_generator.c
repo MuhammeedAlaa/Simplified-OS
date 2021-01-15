@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     */
     FILE *input_file;
     char str[MAXCHAR];
-    char *file_path = "testcases/processes_doc.txt";
+    char *file_path = "testcases/processes_1.txt";
 
     int number_of_processes = 0, memory_size = 10;
     processes_info = (struct processInfo *)malloc(sizeof(struct processInfo) * memory_size);
@@ -158,6 +158,19 @@ int main(int argc, char *argv[])
             // prepare & send message to scheduler
             msg.mtype = getpid() % 10000;
             msg.numberOfProcesses = curr_number_of_processes;
+            curr_process.id = -1;
+            curr_process.arrivalTime = -1;
+            curr_process.runTime = -1;
+            curr_process.priority = -1;
+            curr_process.memsize = -1;
+            curr_process.isRunning = 0;
+            curr_process.pid = -1;
+            curr_process.remainingTime = -1;
+            curr_process.finishTime = -1;
+            curr_process.startTime = -1;
+            curr_process.blockStart = -1;
+            curr_process.actualSize = -1;
+            msg.p_info = curr_process;
             int send_val = msgsnd(sched_msgq_id, &msg, sizeof(msg.numberOfProcesses) + sizeof(msg.p_info) + sizeof(msg.finished), !IPC_NOWAIT);
             if (send_val == -1)
             {
@@ -175,6 +188,13 @@ int main(int argc, char *argv[])
                 curr_process.runTime = processes_info[curr_process_index].runTime;
                 curr_process.priority = processes_info[curr_process_index].priority;
                 curr_process.memsize = processes_info[curr_process_index].memsize;
+                curr_process.isRunning = 0;
+                curr_process.pid = -1;
+                curr_process.remainingTime = -1;
+                curr_process.finishTime = -1;
+                curr_process.startTime = -1;
+                curr_process.blockStart = -1;
+                curr_process.actualSize = -1;
                 curr_process_index++;
 
                 // prepare & send message to scheduler
@@ -206,10 +226,17 @@ void down(int sem)
 
 void clearResources(int signum)
 {
+
     destroyClk(true);
-    semctl(sem1, 0, IPC_RMID, semun);
-    msgctl(sched_msgq_id, IPC_RMID, (struct msqid_ds *)0);
-    if (processes_info != NULL)
-        free(processes_info);
+    if (signum == 2)
+    {
+        // semctl(sem1, 0, IPC_RMID, semun);
+        msgctl(sched_msgq_id, IPC_RMID, (struct msqid_ds *)0);
+        if (processes_info != NULL)
+        {
+            free(processes_info);
+            processes_info = NULL;
+        }
+    }
     exit(0);
 }
