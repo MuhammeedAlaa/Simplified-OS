@@ -17,14 +17,9 @@ int main(int argc, char *argv[])
 {
     char *testnum = argv[1];
     FILE *pFile;
-    printf("aaaaaaaaaaaa\n");
     strcat(testnum, ".txt");
-    printf("aaaaaaaaaaaabb\n");
     char name[] = "testcases/processes_";
-    // strcpy(name, "testcases/processes_");
-    printf("aaaaaaaaaaassss\n");
     strcat(name, testnum);
-    printf("aaaaaaaaaaaadd\n");
     pFile = fopen(name, "w");
     int no;
     struct processData pData;
