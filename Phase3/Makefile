@@ -6,7 +6,7 @@ build:
 	./initializer.o
 clean:
 	./destructor.o
-	rm -f *.out *.o processes.txt
+	rm -f *.out *.o
 
 all: clean build
 

@@ -4,13 +4,7 @@ int main()
 {
     key_t key_id;
     union Semun semun;
-    int up_msgq_id, down_msgq_id, send_val, rec_val, shmid, producerQIndex, consumerQIndex, muxLock, full, empty;
-
-    key_id = ftok("keyfile", 64);
-    down_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
-
-    key_id = ftok("keyfile", 65);
-    up_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
+    int send_val, rec_val, shmid, producerQIndex, consumerQIndex, muxLock, full, empty;
 
     key_id = ftok("keyfile", 66);
     producerQIndex = shmget(key_id, sizeof(int), 0666 | IPC_CREAT);
@@ -31,7 +25,7 @@ int main()
     empty = semget(key_id, 1, 0666 | IPC_CREAT);
 
     // check for any creation error
-    validate(CREATION, up_msgq_id | down_msgq_id | producerQIndex | consumerQIndex | shmid | muxLock | full | empty);
+    validate(CREATION, producerQIndex | consumerQIndex | shmid | muxLock | full | empty);
 
     semun.val = 1;
     validate(MUTEX_SEM_SET_VAL, semctl(muxLock, 0, SETVAL, semun));

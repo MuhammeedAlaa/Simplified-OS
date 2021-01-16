@@ -11,17 +11,11 @@
 #include <sys/sem.h>
 #include <signal.h>
 
-const int BUFFER_SIZE = 2;
+const int BUFFER_SIZE = 3;
 
 typedef short bool;
 #define true 1
 #define false 0
-
-struct msgbuff
-{
-    long mtype;
-    char mtext[1];
-};
 
 /* arg for semctl system calls. */
 union Semun
@@ -280,8 +274,8 @@ void displaySharedBuffer(int shmid)
 {
     void *shmaddr = shmat(shmid, (void *)0, 0);
     for (int i = 0; i < BUFFER_SIZE; i++)
-        printf(" %i", *((int *)shmaddr + i * sizeof(int)));
-    printf("\n");
+        printf(" %2i", *((int *)shmaddr + i * sizeof(int)));
+    printf("\n=========================================\n");
     shmdt(shmaddr);
 }
 

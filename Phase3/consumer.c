@@ -34,7 +34,6 @@ int main()
         displaySharedBuffer(shmid);
         up(muxLock);
         up(empty);
-        usleep(1000000);
     }
     return 0;
 }
