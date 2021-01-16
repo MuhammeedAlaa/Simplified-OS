@@ -214,4 +214,22 @@ void validate(int errorNumber, int checkVar)
     }
     exit(-1);
 }
+
 // ==============================================================================
+// ======================================Common functions========================
+
+/**
+ * function to perform a down operation on a semaphore providing its id
+ * @param semid the id of the semaphore to be modified
+ */
+void down(int sem)
+{
+    struct sembuf p_op;
+
+    p_op.sem_num = 0;
+    p_op.sem_op = -1;
+    p_op.sem_flg = !IPC_NOWAIT;
+
+    validate(SEM_DOWN, semop(sem, &p_op, 1));
+}
+

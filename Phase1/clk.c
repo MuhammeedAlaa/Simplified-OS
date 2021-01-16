@@ -8,7 +8,6 @@
 #include "headers.h"
 
 int shmid;
-int processSem;
 int generatorSem;
 void up(int sem);
 
@@ -16,7 +15,6 @@ void up(int sem);
 void cleanup(int signum)
 {
     shmctl(shmid, IPC_RMID, NULL);
-    semctl(processSem, 0, IPC_RMID, 0);
     semctl(generatorSem, 0, IPC_RMID, 0);
     printf("Clock terminating!\n");
     exit(0);
@@ -45,14 +43,11 @@ int main(int argc, char *argv[])
 
     key_t key_id = ftok("keyfile", SEM1KEY);
     generatorSem = semget(key_id, 1, 0666 | IPC_CREAT);
-    key_id = ftok("keyfile", SEM_PROCESS_KEY);
-    processSem = semget(key_id, 1, 0666 | IPC_CREAT);
     while (1)
     {
         sleep(1);
         (*shmaddr)++;
         up(generatorSem);
-        up(processSem);
     }
 }
 

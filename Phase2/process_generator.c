@@ -4,7 +4,6 @@
 
 // Function declarations
 void clearResources(int);
-void down(int sem);
 
 // Global variables
 union Semun semun;
@@ -13,6 +12,7 @@ struct processInfo *processes_info = NULL;
 
 int main(int argc, char *argv[])
 {
+
     signal(SIGINT, clearResources);
     signal(SIGUSR1, clearResources);
 
@@ -115,7 +115,6 @@ int main(int argc, char *argv[])
     sched_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
 
     int curr_process_index = 0, curr_number_of_processes;
-    // TODO: check dynamic memory allocation
 
     struct msgAlgorithm initMsg;
     // prepare & send message to scheduler
@@ -134,15 +133,8 @@ int main(int argc, char *argv[])
 
     // 4. initialize clock
     initClk();
-    // int x = getClk();
-    // printf("current time is %d\n", x);
+
     // 5. Send the information to the scheduler at the appropriate time.
-    /* 
-        Initialize the IPC Resources needed:
-         - A semaphore to synchronize with the clock time
-         - A message queue to send process data to the schedular through
-    */
-    // 6. Send the information to the scheduler at the appropriate time.
     while (1)
     {
         // wait till the clock changes
@@ -163,19 +155,6 @@ int main(int argc, char *argv[])
             // prepare & send message to scheduler
             msg.mtype = getpid() % 10000;
             msg.numberOfProcesses = curr_number_of_processes;
-            curr_process.id = -1;
-            curr_process.arrivalTime = -1;
-            curr_process.runTime = -1;
-            curr_process.priority = -1;
-            curr_process.memsize = -1;
-            curr_process.isRunning = 0;
-            curr_process.pid = -1;
-            curr_process.remainingTime = -1;
-            curr_process.finishTime = -1;
-            curr_process.startTime = -1;
-            curr_process.blockStart = -1;
-            curr_process.actualSize = -1;
-            msg.p_info = curr_process;
             int send_val = msgsnd(sched_msgq_id, &msg, sizeof(msg.numberOfProcesses) + sizeof(msg.p_info) + sizeof(msg.finished), !IPC_NOWAIT);
             if (send_val == -1)
             {
@@ -193,13 +172,6 @@ int main(int argc, char *argv[])
                 curr_process.runTime = processes_info[curr_process_index].runTime;
                 curr_process.priority = processes_info[curr_process_index].priority;
                 curr_process.memsize = processes_info[curr_process_index].memsize;
-                curr_process.isRunning = 0;
-                curr_process.pid = -1;
-                curr_process.remainingTime = -1;
-                curr_process.finishTime = -1;
-                curr_process.startTime = -1;
-                curr_process.blockStart = -1;
-                curr_process.actualSize = -1;
                 curr_process_index++;
 
                 // prepare & send message to scheduler
@@ -218,20 +190,8 @@ int main(int argc, char *argv[])
     destroyClk(true);
 }
 
-void down(int sem)
-{
-    struct sembuf p_op;
-
-    p_op.sem_num = 0;
-    p_op.sem_op = -1;
-    p_op.sem_flg = !IPC_NOWAIT;
-
-    validate(SEM_DOWN, semop(sem, &p_op, 1));
-}
-
 void clearResources(int signum)
 {
-
     destroyClk(true);
     if (signum == 2)
     {

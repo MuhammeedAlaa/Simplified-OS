@@ -26,4 +26,4 @@ clean:
 all: clean build
 
 run:
-	./process_generator.out testcases/processes_doc.txt
+	./process_generator.out testcases/processes.txt

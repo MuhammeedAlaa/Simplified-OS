@@ -4,7 +4,6 @@
 
 // Function declarations
 void clearResources(int);
-void down(int sem);
 
 // Global variables
 union Semun semun;
@@ -24,7 +23,7 @@ int main(int argc, char *argv[])
     char str[MAXCHAR];
     if (argc == 1)
     {
-        printf("Please provide the file name (path relative to current directory) as an argument!\n");
+        printf("Please provide the file name (path relative to current directory) as an argument !\n");
         exit(-1);
     }
     char *file_path = argv[1];
@@ -114,7 +113,6 @@ int main(int argc, char *argv[])
     sched_msgq_id = msgget(key_id, 0666 | IPC_CREAT);
 
     int curr_process_index = 0, curr_number_of_processes;
-    // TODO: check dynamic memory allocation
 
     struct msgAlgorithm initMsg;
     // prepare & send message to scheduler
@@ -133,15 +131,8 @@ int main(int argc, char *argv[])
 
     // 4. initialize clock
     initClk();
-    // int x = getClk();
-    // printf("current time is %d\n", x);
+    
     // 5. Send the information to the scheduler at the appropriate time.
-    /* 
-        Initialize the IPC Resources needed:
-         - A semaphore to synchronize with the clock time
-         - A message queue to send process data to the schedular through
-    */
-    // 6. Send the information to the scheduler at the appropriate time.
     while (1)
     {
         // wait till the clock changes
@@ -194,17 +185,6 @@ int main(int argc, char *argv[])
 
     // 6. Clear clock resources
     destroyClk(true);
-}
-
-void down(int sem)
-{
-    struct sembuf p_op;
-
-    p_op.sem_num = 0;
-    p_op.sem_op = -1;
-    p_op.sem_flg = !IPC_NOWAIT;
-
-    validate(SEM_DOWN, semop(sem, &p_op, 1));
 }
 
 void clearResources(int signum)
