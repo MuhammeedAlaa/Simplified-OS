@@ -13,6 +13,7 @@ struct processInfo *processes_info = NULL;
 
 int main(int argc, char *argv[])
 {
+
     signal(SIGINT, clearResources);
     signal(SIGUSR1, clearResources);
 
@@ -127,8 +128,8 @@ int main(int argc, char *argv[])
 
     // 4. initialize clock
     initClk();
-    int x = getClk();
-    printf("current time is %d\n", x);
+    // int x = getClk();
+    // printf("current time is %d\n", x);
     // 5. Send the information to the scheduler at the appropriate time.
     /* 
         Initialize the IPC Resources needed:
@@ -204,9 +205,15 @@ void down(int sem)
 void clearResources(int signum)
 {
     destroyClk(true);
-    semctl(sem1, 0, IPC_RMID, semun);
-    msgctl(sched_msgq_id, IPC_RMID, (struct msqid_ds *)0);
-    if (processes_info != NULL)
-        free(processes_info);
+    if (signum == 2)
+    {
+        // semctl(sem1, 0, IPC_RMID, semun);
+        msgctl(sched_msgq_id, IPC_RMID, (struct msqid_ds *)0);
+        if (processes_info != NULL)
+        {
+            free(processes_info);
+            processes_info = NULL;
+        }
+    }
     exit(0);
 }

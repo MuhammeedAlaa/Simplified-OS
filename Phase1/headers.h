@@ -25,6 +25,8 @@ typedef short bool;
 #define MSG_PROC_DOWN_KEY 'D'
 #define MSG_PROC_UP_KEY 'U'
 
+bool terminateSignalSent = 0;
+
 enum Algorithms
 {
     HPF,
@@ -130,8 +132,10 @@ void initClk()
 void destroyClk(bool terminateAll)
 {
     shmdt(shmaddr);
-    if (terminateAll)
+    if (terminateAll && !terminateSignalSent)
     {
+        printf("Call from destory clk \n");
+        terminateSignalSent = 1;
         killpg(getpgrp(), SIGINT);
     }
 }

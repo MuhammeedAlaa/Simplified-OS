@@ -33,14 +33,14 @@ int main(int agrc, char *argv[])
     //remainingtime = ??;
     while (remainingtime > 0)
     {
-        printf("current time seen in the process %d id before receiving message %d \n", getpid(), getClk());
+        // printf("current time seen in the process %d id before receiving message %d \n", getpid(), getClk());
         // down(semid);
         int rec_val = msgrcv(proc_msgqdown_id, &msg, sizeof(msg.remainingTime), getpid(), !IPC_NOWAIT);
         if (rec_val == -1)
         {
             perror("Error in recieving remaining time from schedular\n");
         }
-        printf("current time seen in the process %d id after receiving message %d \n", getpid(), getClk());
+        // printf("current time seen in the process %d id after receiving message %d \n", getpid(), getClk());
         remainingtime = msg.remainingTime;
         remainingtime--;
         msg.remainingTime = remainingtime;

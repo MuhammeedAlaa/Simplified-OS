@@ -144,6 +144,7 @@ void deallocateMem(int block_start, int actualSize)
 
 void destroyBuddyMem()
 {
+    DeleteNode(buddyFreeMem[maxBlockPower], 0);
     for (int i = minBlockPower; i <= maxBlockPower; i++)
     {
         free(buddyFreeMem[i]);
