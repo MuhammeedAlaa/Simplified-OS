@@ -11,9 +11,12 @@ minHeap readyQueueSRTN;
 queue readyQueueRR;
 queue waitingQueue; // for processes that cannot be allocated in memory
 
-int createProcess(struct processInfo process, int algorithm, int quantaMax, struct hashmap *processTable, struct hashmap *statsTable, bool pushInWaitingQueue, int currTime);
-void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *runningProcessId, struct hashmap *processTable, struct hashmap *statsTable);
-void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *processTable, struct hashmap *statsTable);
+struct hashmap *processTable;
+struct hashmap *statsTable;
+
+int createProcess(struct processInfo process, int algorithm, int quantaMax, bool pushInWaitingQueue, int currTime);
+void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *runningProcessId);
+void updateRunningProcessRemainingTime(int *runningProcessId);
 
 /* Clear the resources before exit */
 void cleanup(int signum);
@@ -78,8 +81,8 @@ int main(int argc, char *argv[])
     // create process table and the dataStructure used as the ready list for the algorithm
     int seed = time(NULL);
     srand(time(NULL));
-    struct hashmap *processTable = hashmap_new(sizeof(struct processInfo), 0, seed, seed, process_hash, process_compare, NULL);
-    struct hashmap *statsTable = hashmap_new(sizeof(struct processStats), 0, seed, seed, stats_hash, stats_compare, NULL);
+    processTable = hashmap_new(sizeof(struct processInfo), 0, seed, seed, process_hash, process_compare, NULL);
+    statsTable = hashmap_new(sizeof(struct processStats), 0, seed, seed, stats_hash, stats_compare, NULL);
     // initialize buddy algorithm
     initializeBuddyMem();
     waitingQueue = initQueue();
@@ -107,7 +110,7 @@ int main(int argc, char *argv[])
         printf("CURRENT TIME STEP : %d\n", getClk() + 1);
         if (runningProcessId != -1)
         {
-            updateRunningProcessRemainingTime(&runningProcessId, processTable, statsTable);
+            updateRunningProcessRemainingTime(&runningProcessId);
         }
         do
         {
@@ -120,11 +123,11 @@ int main(int argc, char *argv[])
             if (msg.numberOfProcesses)
             {
                 printf("Attempting to Allocate the process %d in memory ... \n", msg.p_info.id);
-                createProcess(msg.p_info, algorithm, quantaMax, processTable, statsTable, 1, getClk());
+                createProcess(msg.p_info, algorithm, quantaMax, 1, getClk());
             }
         } while (msg.numberOfProcesses - 1 > 0);
 
-        executeAlgorithm(algorithm, quantaMax, &remaingingQuanta, &runningProcessId, processTable, statsTable);
+        executeAlgorithm(algorithm, quantaMax, &remaingingQuanta, &runningProcessId);
         // hashmap_scan(statsTable, stats_iter, NULL);
         printf("-------------------------- Process Table ----------------------------------\n");
         hashmap_scan(processTable, process_iter, NULL);
@@ -211,10 +214,11 @@ uint64_t stats_hash(const void *item, uint64_t seed0, uint64_t seed1)
  * @param process contains the process info received
  * @param algorithm the algorithm used in the scheduler
  * @param quantaMax the maximum quanta for running a single process before preemption in RR algorithm
- * @param processTable the process table that contains the processes active now in the scheduler
+ * @param pushInWaitingQueue if true push the process to waiting queue if it cannot allocate in memory
+ * @param currTime the curr time step recieved by the clock
  * 
  */
-int createProcess(struct processInfo process, int algorithm, int quantaMax, struct hashmap *processTable, struct hashmap *statsTable, bool pushInWaitingQueue, int currTime)
+int createProcess(struct processInfo process, int algorithm, int quantaMax, bool pushInWaitingQueue, int currTime)
 {
     // make a struct containing the process data received from the process generator
     struct processInfo newProcess = {
@@ -291,10 +295,9 @@ int createProcess(struct processInfo process, int algorithm, int quantaMax, stru
  * @param algorithm the algorithm used in the scheduler
  * @param quantaMax the maximum quanta for running a single process before preemption in RR algorithm
  * @param runningProcessId the id of the currently running process
- * @param processTable the process table that contains the processes active now in the scheduler
  * 
  */
-void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *runningProcessId, struct hashmap *processTable, struct hashmap *statsTable)
+void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *runningProcessId)
 {
     struct msgProcessTimeBuff processMsg;
     switch (algorithm)
@@ -425,7 +428,7 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
                         runningProcessPtr->isRunning = 0;
                         push(&readyQueueSRTN, runningProcessPtr->remainingTime, runningProcessPtr->id);
 
-                        ////////////////////Stopped
+                        //Stopped
                         printStatsLog(*runningProcessId, statsTable, 2, getClk());
 
                         // set the process with the least remaining time as the running process
@@ -578,10 +581,9 @@ void executeAlgorithm(int algorithm, int quantaMax, int *remaingingQuanta, int *
 /**
  * function to update the PCB of the currently running process in the process table
  * @param runningProcessId the id of the currently running process
- * @param processTable the process table that contains the processes active now in the scheduler
  * 
  */
-void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *processTable, struct hashmap *statsTable)
+void updateRunningProcessRemainingTime(int *runningProcessId)
 {
     // get the process control block
     struct processInfo process = {.id = *runningProcessId};
@@ -622,7 +624,7 @@ void updateRunningProcessRemainingTime(int *runningProcessId, struct hashmap *pr
             id = front(&waitingQueue);
             struct processInfo pr = {.id = id};
             struct processInfo *p = hashmap_get(processTable, &pr);
-            blockStart = createProcess(*p, algorithm, quantaMax, processTable, statsTable, 0, getClk() + 1);
+            blockStart = createProcess(*p, algorithm, quantaMax, 0, getClk() + 1);
             if (blockStart == -1)
                 break;
             popQueue(&waitingQueue);
@@ -703,9 +705,11 @@ void cleanup(int signum)
     fclose(memory_log);
     msgctl(proc_msgqup_id, IPC_RMID, (struct msqid_ds *)0);
     msgctl(proc_msgqdown_id, IPC_RMID, (struct msqid_ds *)0);
+    hashmap_free(processTable);
+    hashmap_free(statsTable);
     destroyClk(false);
     destroyBuddyMem();
     printf("schedular terminating!\n");
-    kill(getppid(), SIGUSR1);
+    // kill(getppid(), SIGUSR1);
     exit(0);
 }

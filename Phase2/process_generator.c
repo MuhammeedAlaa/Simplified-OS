@@ -95,13 +95,13 @@ int main(int argc, char *argv[])
         execl("clk.out", "clk", NULL);
     }
     // -- forking the scheduler process
-    int sched_pid = fork();
-    if (sched_pid == -1)
-        perror("error in fork");
-    else if (sched_pid == 0)
-    {
-        execl("scheduler.out", "scheduler", NULL);
-    }
+    // int sched_pid = fork();
+    // if (sched_pid == -1)
+    //     perror("error in fork");
+    // else if (sched_pid == 0)
+    // {
+    //     execl("scheduler.out", "scheduler", NULL);
+    // }
 
     key_t key_id = ftok("keyfile", SEM1KEY);
     sem1 = semget(key_id, 1, 0666 | IPC_CREAT);
