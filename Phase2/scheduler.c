@@ -710,6 +710,6 @@ void cleanup(int signum)
     destroyClk(false);
     destroyBuddyMem();
     printf("schedular terminating!\n");
-    // kill(getppid(), SIGUSR1);
+    kill(getppid(), SIGUSR1);
     exit(0);
 }
