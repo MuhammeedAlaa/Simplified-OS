@@ -15,3 +15,34 @@ It extends phase 1 to add memory capabilities to the system. The following assum
 Now processes should be allocated in memory whenever they arrive and deallocated when leaving using the buddy algorithm. If a process cannot be allocated in memory on arrival it is added to a waiting queue till it can be allocated once more following the first come first serve criteria where the process that failed to allocate first will be the first process to be allocated in memory when there is enough space even if there are more processes waiting in the queue with smaller size. This was done for simplifying the process. However, the more efficient technique is to search the waiting queue for the process that can enter the system whenever space is available.
 ## [Phase 3](/Phase3):
 It is independent of the previous two phases as it focuses more on the synchronization problem by implementing the producer consumer problem with multiple consumers and producers allowed at the same time
+
+## Examples:
+### Phase 1 & 2 : 
+#### Input file:
+[process_docs.txt](Phase2/testcases/processes_doc.txt)
+#### Run details:
+![init](Screenshots/Phase1&2/initialization.png)
+![ts1](Screenshots/Phase1&2/ts1.png)
+![ts2](Screenshots/Phase1&2/ts2.png)
+![ts3](Screenshots/Phase1&2/ts3.png)
+![ts4](Screenshots/Phase1&2/ts4.png)
+![ts5](Screenshots/Phase1&2/ts5.png)
+![ts6](Screenshots/Phase1&2/ts6.png)
+![ts7](Screenshots/Phase1&2/ts7.png)
+![ts8](Screenshots/Phase1&2/ts8.png)
+![ts9](Screenshots/Phase1&2/ts9.png)
+![ts10](Screenshots/Phase1&2/ts10.png)
+#### Output files & statistics:
+- sceduler log:
+![sched_log](Screenshots/Phase1&2/sched_log.png)
+- memory log:
+![mem_log](Screenshots/Phase1&2/mem_log.png)
+- statistics:
+![sched_perf](Screenshots/Phase1&2/sched_perf.png)
+
+
+## Contributers:
+- [Hossam Alaa](https://github.com/hossamalaa69)
+- [Muhammed Ahmad Hesham](https://github.com/Etshawy1)
+- [Muhammed Alaa](https://github.com/MuhammeedAlaa)
+- [Mahmoud Gody](https://github.com/Moodrammer)
