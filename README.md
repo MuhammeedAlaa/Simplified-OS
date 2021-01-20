@@ -33,11 +33,16 @@ It is independent of the previous two phases as it focuses more on the synchroni
 ![ts9](Screenshots/Phase1&2/ts9.png)
 ![ts10](Screenshots/Phase1&2/ts10.png)
 #### Output files & statistics:
-- sceduler log:
+- scheduler log:
+
 ![sched_log](Screenshots/Phase1&2/sched_log.png)
+
 - memory log:
+
 ![mem_log](Screenshots/Phase1&2/mem_log.png)
+
 - statistics:
+
 ![sched_perf](Screenshots/Phase1&2/sched_perf.png)
 
 
