@@ -10,8 +10,8 @@
 - [Phase2 (Memory Allocation)](#Phase-2)
 - [Phase3 (Synchronization)](#Phase-3)
 - [Examples and demos](#examples)
-  * [Phase 1&2](#Phase1&2)
-  * [Phase 3](#Phase3)
+  * [Phase 1&2](#Phase1&2-Demo)
+  * [Phase 3](#Phase3-Demo)
 
 ## About
 Simplified OS is a project that implements some algorithms used by an operating system kernel to achieve the jobs of scheduling processes, synchronization of processes through implementing the producer-consumer problem and memory allocation using the buddy system which is a dynamic partitioning algorithm. The project is divided into three phases:
@@ -32,7 +32,7 @@ Now processes should be allocated in memory whenever they arrive and deallocated
 It is independent of the previous two phases as it focuses more on the synchronization problem by implementing the producer consumer problem with multiple consumers and producers allowed at the same time
 
 ## Examples:
-### Phase1&2: 
+### Phase1&2 Demo: 
 #### Input file:
 [process_docs.txt](Phase2/testcases/processes_doc.txt)
 #### Run details:
@@ -61,7 +61,7 @@ It is independent of the previous two phases as it focuses more on the synchroni
 ![sched_perf](Screenshots/Phase1&2/sched_perf.png)
 
 
-### Phase3: 
+### Phase3 Demo: 
 
 you can change the buffer size from `headers.h` file using the constant variable `BUFFER_SIZE` also to simulate different situations of different speed producers/consumers you can put `sleep(integer time in seconds)` at the end of the loop.
 
