@@ -12,6 +12,7 @@
 - [Examples and demos](#examples)
   * [Phase 1&2](#Phase12-Demo)
   * [Phase 3](#Phase3-Demo)
+- [License](#License)
 
 ## About
 Simplified OS is a project that implements some algorithms used by an operating system kernel to achieve the jobs of scheduling processes, synchronization of processes through implementing the producer-consumer problem and memory allocation using the buddy system which is a dynamic partitioning algorithm. The project is divided into three phases:
@@ -74,4 +75,7 @@ you can change the buffer size from `headers.h` file using the constant variable
 - [Muhammed Ahmad Hesham](https://github.com/Etshawy1)
 - [Muhammed Alaa](https://github.com/MuhammeedAlaa)
 - [Mahmoud Gody](https://github.com/Moodrammer)
+
+## License:
+- Licensed under the [MIT License](./License).
 
