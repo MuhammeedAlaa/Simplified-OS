@@ -11,7 +11,7 @@
 #include <sys/sem.h>
 #include <signal.h>
 
-const int BUFFER_SIZE = 3;
+const int BUFFER_SIZE = 5;
 
 typedef short bool;
 #define true 1

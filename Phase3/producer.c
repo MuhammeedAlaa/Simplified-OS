@@ -39,6 +39,7 @@ int main()
         up(muxLock);
         up(full);
         i++;
+        sleep(1);
     }
     return 0;
 }

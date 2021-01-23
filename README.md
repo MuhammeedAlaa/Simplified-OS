@@ -1,5 +1,20 @@
 # Simplified-OS
-Simplified OS is a project that implements some algorithms used by an operating system kernel to achieve the jobs of scheduling processes, synchronization of processes through implementing the producer-consumer problem and memory allocation using the buddy system which is a dynamic partitioning algorithm. The project is divided into three phases :
+
+[![GitHub contributors](https://img.shields.io/github/contributors/MuhammeedAlaa/Simplified-OS)](https://github.com/MuhammeedAlaa/Simplified-OS/graphs/contributors)
+[![GitHub forks](https://img.shields.io/github/forks/MuhammeedAlaa/Simplified-OS)](https://github.com/MuhammeedAlaa/Simplified-OS/network/members)
+[![GitHub stars](https://img.shields.io/github/stars/MuhammeedAlaa/Simplified-OS)](https://github.com/MuhammeedAlaa/Simplified-OS/stargazers)
+[![GitHub license](https://img.shields.io/github/license/MuhammeedAlaa/Simplified-OS)](https://github.com/MuhammeedAlaa/Simplified-OS/blob/master/License)
+## Table of Contents
+- [Introduction](#About)
+- [Phase1 (Scheduler)](#Phase-1)
+- [Phase2 (Memory Allocation)](#Phase-2)
+- [Phase3 (Synchronization)](#Phase-3)
+- [Examples and demos](#examples)
+  * [Phase 1&2](#phase1&2)
+  * [Phase 3](#Phase3)
+
+## About
+Simplified OS is a project that implements some algorithms used by an operating system kernel to achieve the jobs of scheduling processes, synchronization of processes through implementing the producer-consumer problem and memory allocation using the buddy system which is a dynamic partitioning algorithm. The project is divided into three phases:
 ## [Phase 1](/Phase1):
 Includes implementing a process generator and an emulation of a clock to simulate the generation of processes in a system, then implementing a scheduler that is responsible for receiving processes at their arrival time and scheduling them using one of three scheduling algorithms taken as input from the user at the start of the program. The three algorithms implemented are:
 - Non Pre-emptive Highest Priority first (HPF)
@@ -17,7 +32,7 @@ Now processes should be allocated in memory whenever they arrive and deallocated
 It is independent of the previous two phases as it focuses more on the synchronization problem by implementing the producer consumer problem with multiple consumers and producers allowed at the same time
 
 ## Examples:
-### Phase 1 & 2 : 
+### Phase1&2: 
 #### Input file:
 [process_docs.txt](Phase2/testcases/processes_doc.txt)
 #### Run details:
@@ -46,8 +61,17 @@ It is independent of the previous two phases as it focuses more on the synchroni
 ![sched_perf](Screenshots/Phase1&2/sched_perf.png)
 
 
+### Phase3: 
+
+you can change the buffer size from `headers.h` file using the constant variable `BUFFER_SIZE` also to simulate different situations of different speed producers/consumers you can put `sleep(integer time in seconds)` at the end of the loop.
+
+![Phase 3 demo](Screenshots/Phase3/demo.gif)
+
+* Note: in our implementation of the circular queue the buffer index is reset to 0 when the buffer is empty so producer will always write on index 0 in case of fast consumer.
+
 ## Contributers:
 - [Hossam Alaa](https://github.com/hossamalaa69)
 - [Muhammed Ahmad Hesham](https://github.com/Etshawy1)
 - [Muhammed Alaa](https://github.com/MuhammeedAlaa)
 - [Mahmoud Gody](https://github.com/Moodrammer)
+
