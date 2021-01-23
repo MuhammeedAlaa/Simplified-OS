@@ -3,7 +3,7 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/MuhammeedAlaa/Simplified-OS)](https://github.com/MuhammeedAlaa/Simplified-OS/graphs/contributors)
 [![GitHub forks](https://img.shields.io/github/forks/MuhammeedAlaa/Simplified-OS)](https://github.com/MuhammeedAlaa/Simplified-OS/network/members)
 [![GitHub stars](https://img.shields.io/github/stars/MuhammeedAlaa/Simplified-OS)](https://github.com/MuhammeedAlaa/Simplified-OS/stargazers)
-[![GitHub license](https://img.shields.io/github/license/MuhammeedAlaa/Simplified-OS)](https://github.com/MuhammeedAlaa/Simplified-OS/blob/master/License)
+[![GitHub license](https://img.shields.io/github/license/MuhammeedAlaa/producer-consumer)](https://github.com/MuhammeedAlaa/Simplified-OS/blob/master/License)
 ## Table of Contents
 - [Introduction](#About)
 - [Phase1 (Scheduler)](#Phase-1)
