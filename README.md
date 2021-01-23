@@ -10,7 +10,7 @@
 - [Phase2 (Memory Allocation)](#Phase-2)
 - [Phase3 (Synchronization)](#Phase-3)
 - [Examples and demos](#examples)
-  * [Phase 1&2](#phase1&2)
+  * [Phase 1&2](#Phase1&2)
   * [Phase 3](#Phase3)
 
 ## About
