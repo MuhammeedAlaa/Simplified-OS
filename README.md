@@ -10,7 +10,7 @@
 - [Phase2 (Memory Allocation)](#Phase-2)
 - [Phase3 (Synchronization)](#Phase-3)
 - [Examples and demos](#examples)
-  * [Phase 1&2](#Phase1&2-Demo)
+  * [Phase 1&2](#Phase1,2-Demo)
   * [Phase 3](#Phase3-Demo)
 
 ## About
@@ -32,7 +32,7 @@ Now processes should be allocated in memory whenever they arrive and deallocated
 It is independent of the previous two phases as it focuses more on the synchronization problem by implementing the producer consumer problem with multiple consumers and producers allowed at the same time
 
 ## Examples:
-### Phase1&2 Demo: 
+### Phase1,2 Demo: 
 #### Input file:
 [process_docs.txt](Phase2/testcases/processes_doc.txt)
 #### Run details:
